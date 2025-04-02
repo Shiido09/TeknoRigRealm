@@ -1,11 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   View, 
   Text, 
   ScrollView, 
   Image, 
   TouchableOpacity, 
-  StatusBar
+  StatusBar,
+  Animated,
+  Dimensions,
+  StyleSheet
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as SecureStore from 'expo-secure-store';
@@ -13,6 +16,9 @@ import styles from '../styles/screens/LandingPageStyles';
 
 const LandingPage = ({ navigation }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const slideAnim = useRef(new Animated.Value(-300)).current;
+  const screenWidth = Dimensions.get('window').width;
 
   useEffect(() => {
     // Check if user is logged in on component mount
@@ -31,9 +37,65 @@ const LandingPage = ({ navigation }) => {
     return unsubscribe;
   }, [navigation]);
 
+  // Toggle drawer animation
+  const toggleDrawer = () => {
+    const toValue = drawerOpen ? -300 : 0;
+    Animated.timing(slideAnim, {
+      toValue,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+    setDrawerOpen(!drawerOpen);
+  };
+
+  // Drawer menu items
+  const drawerItems = [
+    { title: 'My Profile', onPress: () => navigation.navigate('Me') },
+    { title: 'My Orders', onPress: () => navigation.navigate('MyOrders') },
+    { title: 'Wishlist', onPress: () => console.log('Wishlist pressed') },
+    { title: 'Settings', onPress: () => console.log('Settings pressed') },
+    { title: 'Log Out', onPress: async () => {
+      await SecureStore.deleteItemAsync('token');
+      setIsLoggedIn(false);
+      toggleDrawer();
+    }},
+  ];
+
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       <StatusBar barStyle="light-content" backgroundColor="#121212" />
+      
+      {/* Drawer Overlay */}
+      {drawerOpen && (
+        <TouchableOpacity 
+          style={drawerStyles.overlay} 
+          activeOpacity={1} 
+          onPress={toggleDrawer}
+        />
+      )}
+      
+      {/* Drawer Content */}
+      <Animated.View style={[
+        drawerStyles.drawer,
+        { transform: [{ translateX: slideAnim }] }
+      ]}>
+        <View style={drawerStyles.drawerHeader}>
+          <Text style={drawerStyles.drawerTitle}>TeknorigRealm</Text>
+          <Text style={drawerStyles.drawerSubtitle}>Welcome back!</Text>
+        </View>
+        <View style={drawerStyles.drawerContent}>
+          {drawerItems.map((item, index) => (
+            <TouchableOpacity 
+              key={index} 
+              style={drawerStyles.drawerItem}
+              onPress={item.onPress}
+            >
+              <Text style={drawerStyles.drawerItemText}>{item.title}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </Animated.View>
+      
       <ScrollView style={styles.scrollView}>
         
         {/* Header Section */}
@@ -41,12 +103,12 @@ const LandingPage = ({ navigation }) => {
           <Text style={styles.logo}>TeknorigRealm</Text>
           <View style={styles.headerRight}>
             {isLoggedIn ? (
-              // Show profile button when logged in
+              // Replace Profile button with Drawer Toggle
               <TouchableOpacity 
                 style={[styles.authButton, styles.profileButton]} 
-                onPress={() => navigation.navigate('Me')}
+                onPress={toggleDrawer}
               >
-                <Text style={styles.authButtonText}>My Profile</Text>
+                <Text style={styles.authButtonText}>Menu</Text>
               </TouchableOpacity>
             ) : (
               // Show login/register buttons when logged out
@@ -154,6 +216,55 @@ const LandingPage = ({ navigation }) => {
     </SafeAreaView>
   );
 };
+
+// Drawer styles
+const drawerStyles = StyleSheet.create({
+  overlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    zIndex: 1,
+  },
+  drawer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: 280,
+    height: '100%',
+    backgroundColor: '#1A1A1A',
+    zIndex: 2,
+    paddingTop: 50,
+    paddingHorizontal: 15,
+  },
+  drawerHeader: {
+    marginBottom: 30,
+  },
+  drawerTitle: {
+    color: '#FFFFFF',
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 5,
+  },
+  drawerSubtitle: {
+    color: '#AAAAAA',
+    fontSize: 14,
+  },
+  drawerContent: {
+    flex: 1,
+  },
+  drawerItem: {
+    paddingVertical: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#2A2A2A',
+  },
+  drawerItemText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+  },
+});
 
 // Features
 const features = [
