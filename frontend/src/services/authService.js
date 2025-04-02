@@ -1,5 +1,45 @@
-import * as SecureStore from 'expo-secure-store'; // Import SecureStore
+import * as SQLite from 'expo-sqlite'; // Replace SecureStore with SQLite
 import { API_URL } from '../config/apiConfig';
+
+// Initialize the SQLite database
+const initDatabase = async () => {
+  const db = await SQLite.openDatabaseAsync('teknorigAuth');
+  // Create table if it doesn't exist
+  await db.execAsync(`
+    CREATE TABLE IF NOT EXISTS secure_store (
+      key TEXT PRIMARY KEY NOT NULL,
+      value TEXT NOT NULL
+    );
+  `);
+  return db;
+};
+
+// Helper function to set a key-value pair
+export const setItem = async (key, value) => {
+  const db = await initDatabase();
+  // Use REPLACE to handle both inserts and updates
+  await db.runAsync(
+    'REPLACE INTO secure_store (key, value) VALUES (?, ?)',
+    key,
+    value.toString()
+  );
+};
+
+// Helper function to get a value by key
+export const getItem = async (key) => {
+  const db = await initDatabase();
+  const result = await db.getFirstAsync(
+    'SELECT value FROM secure_store WHERE key = ?',
+    key
+  );
+  return result ? result.value : null;
+};
+
+// Helper function to delete a key-value pair
+export const deleteItem = async (key) => {
+  const db = await initDatabase();
+  await db.runAsync('DELETE FROM secure_store WHERE key = ?', key);
+};
 
 /**
  * Register a new user
@@ -74,8 +114,8 @@ export const login = async (credentials) => {
       throw new Error(data.message || 'Login failed');
     }
 
-    // Store token in SecureStore
-    await SecureStore.setItemAsync('token', data.token);
+    // Store token in SQLite database
+    await setItem('token', data.token);
 
     return data;
   } catch (error) {
@@ -91,7 +131,7 @@ export const login = async (credentials) => {
  */
 export const getUserById = async (userId) => {
   try {
-    const token = await SecureStore.getItemAsync('token');
+    const token = await getItem('token');
     const response = await fetch(`${API_URL}/users/${userId}`, {
       method: 'GET',
       headers: {
@@ -121,7 +161,7 @@ export const getUserById = async (userId) => {
  */
 export const updateUser = async (userId, userData, avatarUri) => {
   try {
-    const token = await SecureStore.getItemAsync('token');
+    const token = await getItem('token');
     const formData = new FormData();
 
     // Add user data to form
@@ -168,7 +208,7 @@ export const updateUser = async (userId, userData, avatarUri) => {
  */
 export const logout = async () => {
   try {
-    const token = await SecureStore.getItemAsync('token');
+    const token = await getItem('token');
     
     if (token) {
       // Call logout endpoint (will fail silently if server is unavailable)
@@ -186,11 +226,11 @@ export const logout = async () => {
     }
     
     // Clear stored credentials regardless of server response
-    await SecureStore.deleteItemAsync('token');
-    await SecureStore.deleteItemAsync('userId');
+    await deleteItem('token');
+    await deleteItem('userId');
     
     // Force a navigation reset by storing a timestamp to trigger app-wide updates
-    await SecureStore.setItemAsync('lastLogoutTime', Date.now().toString());
+    await setItem('lastLogoutTime', Date.now().toString());
     
     return { success: true };
   } catch (error) {

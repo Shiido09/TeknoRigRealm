@@ -8,7 +8,7 @@ import {
   ScrollView
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import * as SecureStore from 'expo-secure-store';
+import { getItem } from '../services/authService'; // Import SQLite function
 import styles from '../styles/screens/MyOrdersScreenStyles';
 
 const MyOrdersScreen = ({ navigation }) => {
@@ -86,7 +86,7 @@ const MyOrdersScreen = ({ navigation }) => {
     const loadMockData = async () => {
       try {
         // Check if user is logged in
-        const token = await SecureStore.getItemAsync('token');
+        const token = await getItem('token');
         
         if (!token) {
           throw new Error('You are not logged in');

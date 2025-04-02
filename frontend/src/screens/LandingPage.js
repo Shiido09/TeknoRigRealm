@@ -11,9 +11,8 @@ import {
   StyleSheet
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import * as SecureStore from 'expo-secure-store';
 import styles from '../styles/screens/LandingPageStyles';
-import { logout } from '../services/authService'; // Import the logout service
+import { getItem, logout } from '../services/authService'; // Import SQLite functions
 
 const LandingPage = ({ navigation }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -24,7 +23,7 @@ const LandingPage = ({ navigation }) => {
   useEffect(() => {
     // Check if user is logged in on component mount
     const checkLoginStatus = async () => {
-      const token = await SecureStore.getItemAsync('token');
+      const token = await getItem('token');
       setIsLoggedIn(!!token); // Convert to boolean
     };
 

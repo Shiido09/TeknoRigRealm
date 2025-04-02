@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Text, View } from 'react-native';
-import * as SecureStore from 'expo-secure-store';
+import { getItem } from '../services/authService'; // Import SQLite function
 
 // Import screens
 import LandingPage from '../screens/LandingPage';
@@ -36,8 +36,8 @@ const BottomTabNavigator = ({ navigation, route }) => {
   // Check login status whenever the tab navigator is focused or when params change
   useEffect(() => {
     const checkLoginStatus = async () => {
-      const token = await SecureStore.getItemAsync('token');
-      const logoutTime = await SecureStore.getItemAsync('lastLogoutTime');
+      const token = await getItem('token');
+      const logoutTime = await getItem('lastLogoutTime');
       
       // Update logout time if it changed
       if (logoutTime !== lastLogoutTime) {

@@ -11,9 +11,8 @@ import {
   ActivityIndicator
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import * as SecureStore from 'expo-secure-store'; // Import SecureStore
 import styles from '../styles/screens/LoginScreenStyles';
-import { login } from '../services/authService';
+import { login, setItem } from '../services/authService';
 
 const LoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
@@ -24,8 +23,8 @@ const LoginScreen = ({ navigation }) => {
     try {
       setIsLoading(true);
       const data = await login({ email, password });
-      await SecureStore.setItemAsync('token', data.token); // Store token in SecureStore
-      await SecureStore.setItemAsync('userId', data._id); // Store user ID in SecureStore
+      await setItem('token', data.token); // Store token using SQLite
+      await setItem('userId', data._id); // Store user ID using SQLite
       Alert.alert('Login Successful', 'Welcome back!');
       navigation.navigate('Main'); 
     } catch (error) {
