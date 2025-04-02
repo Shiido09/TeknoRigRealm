@@ -100,6 +100,15 @@ const styles = StyleSheet.create({
     deleteButton: {
         backgroundColor: '#FF4444',
     },
+    centered: {
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    errorText: {
+        color: '#FF5252',
+        fontSize: 16,
+        textAlign: 'center',
+    },
 });
 
 export default styles;

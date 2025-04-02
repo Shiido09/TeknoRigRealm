@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, Image } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { MaterialIcons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker'; // Import ImagePicker
+import { useDispatch, useSelector } from 'react-redux';
+import { createProduct } from '../../../redux/actions/productAction';
 import styles from '../../../styles/screens/admin/product/addProdStyles';
 
 const CATEGORIES = [
@@ -16,16 +19,84 @@ const CATEGORIES = [
 ];
 
 const AddProductScreen = ({ navigation }) => {
+    const dispatch = useDispatch();
+    const { loading, error } = useSelector((state) => state.productState || {});
+
     const [productName, setProductName] = useState('');
     const [price, setPrice] = useState('');
     const [stocks, setStocks] = useState('');
     const [description, setDescription] = useState('');
     const [category, setCategory] = useState(CATEGORIES[0]);
-    const [images, setImages] = useState([]);
+    const [images, setImages] = useState([]); // Array to store selected images
 
-    const handleAddProduct = () => {
-        // Add product logic here
-        navigation.goBack();
+    // Function to pick an image from the gallery
+    const pickImage = async () => {
+        try {
+            const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+            if (status !== 'granted') {
+                console.log('Permission status:', status);
+                Alert.alert('Permission Denied', 'We need access to your gallery to upload images.');
+                return;
+            }
+    
+            const result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                allowsEditing: true,
+                quality: 1,
+            });
+    
+            console.log('Image Picker Result:', result);
+    
+            if (result.canceled) {
+                console.log('Image selection was canceled.');
+                return;
+            }
+    
+            // Access the URI from the assets array
+            if (result.assets && result.assets.length > 0) {
+                const selectedImage = result.assets[0].uri;
+                setImages([...images, { uri: selectedImage }]);
+            } else {
+                console.error('No assets found in the result:', result);
+                Alert.alert('Error', 'Failed to retrieve the image URI.');
+            }
+        } catch (error) {
+            console.error('Error picking image:', error);
+            Alert.alert('Error', 'Something went wrong while picking the image.');
+        }
+    };
+    
+    const handleAddProduct = async () => {
+        if (!productName || !price || !stocks || !description || !category) {
+            Alert.alert('Error', 'Please fill in all fields.');
+            return;
+        }
+    
+        const formData = new FormData();
+    
+        formData.append('product_name', productName);
+        formData.append('price', price);
+        formData.append('stocks', stocks);
+        formData.append('description', description);
+        formData.append('category', category);
+    
+        // Append images to the FormData
+        images.forEach((image, index) => {
+            formData.append('product_images', {
+                uri: image.uri,
+                name: `image_${index}.jpg`, // You can customize the file name
+                type: 'image/jpeg', // Ensure the correct MIME type
+            });
+        });
+    
+        try {
+            await dispatch(createProduct(formData));
+            Alert.alert('Success', 'Product added successfully!', [
+                { text: 'OK', onPress: () => navigation.goBack() },
+            ]);
+        } catch (err) {
+            Alert.alert('Error', error || 'Failed to add product.');
+        }
     };
 
     return (
@@ -109,21 +180,36 @@ const AddProductScreen = ({ navigation }) => {
                         </Picker>
                     </View>
                 </View>
-
                 <TouchableOpacity
                     style={styles.imageUploadButton}
-                    onPress={() => console.log('Upload image')}
+                    onPress={pickImage} // Call the pickImage function
                 >
                     <MaterialIcons name="add-photo-alternate" size={24} color="#FFFFFF" />
                     <Text style={styles.imageUploadText}>Add Product Images</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity
-                    style={styles.submitButton}
-                    onPress={handleAddProduct}
-                >
-                    <Text style={styles.submitButtonText}>Add Product</Text>
-                </TouchableOpacity>
+                {/* Display selected images */}
+                <ScrollView horizontal style={styles.imagePreviewContainer}>
+                    {images.map((image, index) => (
+                        <Image
+                            key={index}
+                            source={{ uri: image.uri }}
+                            style={styles.imagePreview}
+                        />
+                    ))}
+                </ScrollView>
+                {loading ? (
+                    <TouchableOpacity style={[styles.submitButton, styles.disabledButton]} disabled>
+                        <Text style={styles.submitButtonText}>Adding...</Text>
+                    </TouchableOpacity>
+                ) : (
+                    <TouchableOpacity
+                        style={styles.submitButton}
+                        onPress={handleAddProduct}
+                    >
+                        <Text style={styles.submitButtonText}>Add Product</Text>
+                    </TouchableOpacity>
+                )}
             </ScrollView>
         </View>
     );

@@ -80,6 +80,16 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: 'bold',
     },
+    imagePreviewContainer: {
+        flexDirection: 'row',
+        marginVertical: 10,
+    },
+    imagePreview: {
+        width: 100,
+        height: 100,
+        marginRight: 10,
+        borderRadius: 8,
+    },
 });
 
 export default styles;
