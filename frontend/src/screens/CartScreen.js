@@ -1,95 +1,130 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { 
   View, 
   Text, 
   FlatList, 
-  TouchableOpacity, 
   Image, 
+  TouchableOpacity, 
   ActivityIndicator,
   Alert
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
+import { getCartItems, updateCartItemQuantity, removeCartItem } from '../utils/cartDatabase';
 import styles from '../styles/screens/CartScreenStyles';
 
 const CartScreen = ({ navigation }) => {
-  const [loading, setLoading] = useState(false);
-  // Sample cart data - in a real app, you would fetch this from state management
-  const [cartItems, setCartItems] = useState([
-    {
-      id: '1',
-      name: 'Gaming Laptop XZ5000',
-      price: 1299.99,
-      quantity: 1,
-      image: 'https://via.placeholder.com/150/222222/FFFFFF?text=Laptop'
-    },
-    {
-      id: '2',
-      name: 'Mechanical Keyboard K95',
-      price: 149.99,
-      quantity: 1,
-      image: 'https://via.placeholder.com/150/222222/FFFFFF?text=Keyboard'
-    },
-    {
-      id: '3',
-      name: 'Gaming Mouse G502',
-      price: 59.99,
-      quantity: 2,
-      image: 'https://via.placeholder.com/150/222222/FFFFFF?text=Mouse'
+  const [cartItems, setCartItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Calculate the total price of all items in the cart
+  const totalPrice = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+  // Fetch cart items when the screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      fetchCartItems();
+    }, [])
+  );
+
+  const fetchCartItems = async () => {
+    try {
+      setLoading(true);
+      const items = await getCartItems();
+      setCartItems(items);
+    } catch (error) {
+      console.error('Error fetching cart items:', error);
+      Alert.alert('Error', 'Failed to load cart items');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
     }
-  ]);
-
-  // Calculate cart totals
-  const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const shipping = 15.00; // Fixed shipping cost
-  const total = subtotal + shipping;
-
-  const updateQuantity = (id, newQuantity) => {
-    if (newQuantity < 1) return;
-    
-    setCartItems(cartItems.map(item => 
-      item.id === id ? { ...item, quantity: newQuantity } : item
-    ));
   };
 
-  const removeItem = (id) => {
-    Alert.alert(
-      "Remove Item",
-      "Are you sure you want to remove this item from your cart?",
-      [
-        { text: "Cancel", style: "cancel" },
-        { 
-          text: "Remove", 
-          onPress: () => setCartItems(cartItems.filter(item => item.id !== id)) 
+  const handleRefresh = () => {
+    setRefreshing(true);
+    fetchCartItems();
+  };
+
+  const handleUpdateQuantity = async (item, change) => {
+    try {
+      const newQuantity = item.quantity + change;
+      
+      if (newQuantity <= 0) {
+        // If quantity would be zero or negative, ask to remove item
+        Alert.alert(
+          'Remove Item',
+          `Remove ${item.productName} from cart?`,
+          [
+            { text: 'Cancel', style: 'cancel' },
+            { 
+              text: 'Remove', 
+              onPress: async () => {
+                const success = await removeCartItem(item.id);
+                if (success) {
+                  fetchCartItems();
+                }
+              }
+            }
+          ]
+        );
+      } else {
+        // Update quantity
+        const success = await updateCartItemQuantity(item.id, newQuantity);
+        if (success) {
+          // Update local state to reflect the change
+          setCartItems(cartItems.map(cartItem => 
+            cartItem.id === item.id 
+              ? { ...cartItem, quantity: newQuantity } 
+              : cartItem
+          ));
         }
-      ]
-    );
+      }
+    } catch (error) {
+      console.error('Error updating quantity:', error);
+      Alert.alert('Error', 'Failed to update quantity');
+    }
   };
 
-  // Modified to navigate to checkout details screen
-  const proceedToCheckout = () => {
-    // Pass cart information to the checkout details screen
-    navigation.navigate('CheckoutDetails', {
-      cartItems,
-      subtotal,
-      shipping,
-      total
-    });
+  const handleRemoveItem = async (itemId, productName) => {
+    try {
+      Alert.alert(
+        'Remove Item',
+        `Remove ${productName} from cart?`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { 
+            text: 'Remove', 
+            onPress: async () => {
+              const success = await removeCartItem(itemId);
+              if (success) {
+                fetchCartItems();
+              }
+            }
+          }
+        ]
+      );
+    } catch (error) {
+      console.error('Error removing item:', error);
+      Alert.alert('Error', 'Failed to remove item');
+    }
   };
 
   const renderCartItem = ({ item }) => (
     <View style={styles.cartItem}>
       <Image 
-        source={{ uri: item.image }} 
-        style={styles.itemImage}
+        source={{ uri: item.imageUrl }} 
+        style={styles.productImage}
       />
-      <View style={styles.itemDetails}>
-        <Text style={styles.itemName}>{item.name}</Text>
-        <Text style={styles.itemPrice}>${item.price.toFixed(2)}</Text>
+      <View style={styles.productDetails}>
+        <Text style={styles.productName}>{item.productName}</Text>
+        <Text style={styles.productPrice}>₱{item.price.toFixed(2)}</Text>
         
         <View style={styles.quantityContainer}>
           <TouchableOpacity 
             style={styles.quantityButton}
-            onPress={() => updateQuantity(item.id, item.quantity - 1)}
+            onPress={() => handleUpdateQuantity(item, -1)}
           >
             <Text style={styles.quantityButtonText}>-</Text>
           </TouchableOpacity>
@@ -98,7 +133,7 @@ const CartScreen = ({ navigation }) => {
           
           <TouchableOpacity 
             style={styles.quantityButton}
-            onPress={() => updateQuantity(item.id, item.quantity + 1)}
+            onPress={() => handleUpdateQuantity(item, 1)}
           >
             <Text style={styles.quantityButtonText}>+</Text>
           </TouchableOpacity>
@@ -107,7 +142,7 @@ const CartScreen = ({ navigation }) => {
       
       <TouchableOpacity 
         style={styles.removeButton}
-        onPress={() => removeItem(item.id)}
+        onPress={() => handleRemoveItem(item.id, item.productName)}
       >
         <Text style={styles.removeButtonText}>×</Text>
       </TouchableOpacity>
@@ -116,6 +151,7 @@ const CartScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Text style={styles.backButtonText}>← Back</Text>
@@ -123,54 +159,43 @@ const CartScreen = ({ navigation }) => {
         <Text style={styles.headerTitle}>My Cart</Text>
       </View>
 
-      {cartItems.length === 0 ? (
-        <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>Your cart is empty</Text>
-          <TouchableOpacity 
-            style={styles.shopButton}
-            onPress={() => navigation.navigate('Products')}
-          >
-            <Text style={styles.shopButtonText}>Start Shopping</Text>
-          </TouchableOpacity>
-        </View>
-      ) : (
+      {loading && !refreshing ? (
+        <ActivityIndicator size="large" color="#4CAF50" style={styles.loadingIndicator} />
+      ) : cartItems.length > 0 ? (
         <>
           <FlatList
             data={cartItems}
             renderItem={renderCartItem}
-            keyExtractor={item => item.id}
+            keyExtractor={(item) => item.id.toString()}
             contentContainerStyle={styles.cartList}
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
           />
           
-          <View style={styles.summaryContainer}>
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Subtotal</Text>
-              <Text style={styles.summaryValue}>${subtotal.toFixed(2)}</Text>
-            </View>
-            
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Shipping</Text>
-              <Text style={styles.summaryValue}>${shipping.toFixed(2)}</Text>
-            </View>
-            
-            <View style={[styles.summaryRow, styles.totalRow]}>
-              <Text style={styles.totalLabel}>Total</Text>
-              <Text style={styles.totalValue}>${total.toFixed(2)}</Text>
+          <View style={styles.footer}>
+            <View style={styles.totalContainer}>
+              <Text style={styles.totalLabel}>Total:</Text>
+              <Text style={styles.totalPrice}>₱{totalPrice.toFixed(2)}</Text>
             </View>
             
             <TouchableOpacity 
-              style={[styles.checkoutButton, loading && styles.disabledButton]}
-              onPress={proceedToCheckout}
-              disabled={loading}
+              style={styles.checkoutButton}
+              onPress={() => navigation.navigate('Checkout')}
             >
-              {loading ? (
-                <ActivityIndicator color="#FFFFFF" />
-              ) : (
-                <Text style={styles.checkoutButtonText}>Proceed to Checkout</Text>
-              )}
+              <Text style={styles.checkoutButtonText}>Proceed to Checkout</Text>
             </TouchableOpacity>
           </View>
         </>
+      ) : (
+        <View style={styles.emptyCartContainer}>
+          <Text style={styles.emptyCartText}>Your cart is empty</Text>
+          <TouchableOpacity 
+            style={styles.shopNowButton}
+            onPress={() => navigation.navigate('Products')}
+          >
+            <Text style={styles.shopNowButtonText}>Shop Now</Text>
+          </TouchableOpacity>
+        </View>
       )}
     </SafeAreaView>
   );

@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import * as SecureStore from 'expo-secure-store';
-import { getUserById, logout } from '../services/authService';
+import { setItem, getItem, logout } from '../services/authService';
 import { API_URL } from '../config/apiConfig';
 
 const ProfileScreen = ({ navigation }) => {
@@ -12,17 +11,10 @@ const ProfileScreen = ({ navigation }) => {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const userId = await SecureStore.getItemAsync('userId');
-        const token = await SecureStore.getItemAsync('token');
+        setLoading(true);
+        const token = await getItem('token');
         
-        if (!token) {
-          throw new Error('You are not logged in');
-        }
-        
-        if (userId) {
-          const userData = await getUserById(userId);
-          setUser(userData);
-        } else {
+        if (token) {
           const response = await fetch(`${API_URL}/users/profile`, {
             method: 'GET',
             headers: {
@@ -38,7 +30,7 @@ const ProfileScreen = ({ navigation }) => {
           
           setUser(data.user);
           if (data.user._id) {
-            await SecureStore.setItemAsync('userId', data.user._id);
+            await setItem('userId', data.user._id);
           }
         }
       } catch (error) {

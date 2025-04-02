@@ -1,5 +1,74 @@
-import * as SecureStore from 'expo-secure-store'; // Import SecureStore
+import * as SQLite from 'expo-sqlite';
 import { API_URL } from '../config/apiConfig';
+
+let db;
+
+// Initialize the SQLite database
+const initDatabase = async () => {
+  try {
+    if (!db) {
+      db = await SQLite.openDatabaseAsync('teknorigAuth.db');
+      
+      // Create table if it doesn't exist
+      await db.execAsync(`
+        PRAGMA journal_mode = WAL;
+        CREATE TABLE IF NOT EXISTS secure_store (
+          key TEXT PRIMARY KEY NOT NULL,
+          value TEXT NOT NULL
+        );
+      `);
+    }
+    return db;
+  } catch (error) {
+    console.error('Error initializing auth database:', error);
+    throw error;
+  }
+};
+
+// Helper function to set a key-value pair
+export const setItem = async (key, value) => {
+  try {
+    const database = await initDatabase();
+    
+    // Use REPLACE to handle both inserts and updates
+    await database.runAsync(
+      'REPLACE INTO secure_store (key, value) VALUES (?, ?)',
+      key,
+      value.toString()
+    );
+  } catch (error) {
+    console.error(`Error setting item ${key}:`, error);
+    throw error;
+  }
+};
+
+// Helper function to get a value by key
+export const getItem = async (key) => {
+  try {
+    const database = await initDatabase();
+    
+    const result = await database.getFirstAsync(
+      'SELECT value FROM secure_store WHERE key = ?',
+      key
+    );
+    
+    return result ? result.value : null;
+  } catch (error) {
+    console.error(`Error getting item ${key}:`, error);
+    return null;
+  }
+};
+
+// Helper function to delete a key-value pair
+export const deleteItem = async (key) => {
+  try {
+    const database = await initDatabase();
+    await database.runAsync('DELETE FROM secure_store WHERE key = ?', key);
+  } catch (error) {
+    console.error(`Error deleting item ${key}:`, error);
+    throw error;
+  }
+};
 
 /**
  * Register a new user
@@ -74,8 +143,11 @@ export const login = async (credentials) => {
       throw new Error(data.message || 'Login failed');
     }
 
-    // Store token in SecureStore
-    await SecureStore.setItemAsync('token', data.token);
+    // Store token and user ID in SQLite database
+    await setItem('token', data.token);
+    if (data.user && data.user._id) {
+      await setItem('userId', data.user._id);
+    }
 
     return data;
   } catch (error) {
@@ -91,7 +163,7 @@ export const login = async (credentials) => {
  */
 export const getUserById = async (userId) => {
   try {
-    const token = await SecureStore.getItemAsync('token');
+    const token = await getItem('token');
     const response = await fetch(`${API_URL}/users/${userId}`, {
       method: 'GET',
       headers: {
@@ -121,7 +193,7 @@ export const getUserById = async (userId) => {
  */
 export const updateUser = async (userId, userData, avatarUri) => {
   try {
-    const token = await SecureStore.getItemAsync('token');
+    const token = await getItem('token');
     const formData = new FormData();
 
     // Add user data to form
@@ -168,7 +240,7 @@ export const updateUser = async (userId, userData, avatarUri) => {
  */
 export const logout = async () => {
   try {
-    const token = await SecureStore.getItemAsync('token');
+    const token = await getItem('token');
     
     if (token) {
       // Call logout endpoint (will fail silently if server is unavailable)
@@ -185,12 +257,12 @@ export const logout = async () => {
       }
     }
     
-    // Clear stored credentials regardless of server response
-    await SecureStore.deleteItemAsync('token');
-    await SecureStore.deleteItemAsync('userId');
+    // Only clear the token, keep userId for cart persistence
+    await deleteItem('token');
+    // await deleteItem('userId'); // Commented out to keep userId for cart data
     
     // Force a navigation reset by storing a timestamp to trigger app-wide updates
-    await SecureStore.setItemAsync('lastLogoutTime', Date.now().toString());
+    await setItem('lastLogoutTime', Date.now().toString());
     
     return { success: true };
   } catch (error) {

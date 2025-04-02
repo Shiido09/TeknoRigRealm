@@ -12,7 +12,7 @@ import {
   Modal
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import * as SecureStore from 'expo-secure-store';
+import { getItem } from '../services/authService';
 import styles from '../styles/screens/CheckoutDetailsScreenStyles';
 
 const CheckoutDetailsScreen = ({ route, navigation }) => {
@@ -51,8 +51,11 @@ const CheckoutDetailsScreen = ({ route, navigation }) => {
   // Calculate final total with selected courier
   const finalTotal = subtotal + getSelectedCourierPrice();
 
-  const placeOrder = () => {
+  const placeOrder = async () => {
     setLoading(true);
+
+    const token = await getItem('token');
+    const userId = await getItem('userId');
 
     // Simulate API call
     setTimeout(() => {
