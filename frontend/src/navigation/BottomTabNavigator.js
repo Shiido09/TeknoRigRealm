@@ -29,13 +29,21 @@ const TabIcon = ({ name, focused }) => {
   );
 };
 
-const BottomTabNavigator = ({ navigation }) => {
+const BottomTabNavigator = ({ navigation, route }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [lastLogoutTime, setLastLogoutTime] = useState(null);
 
-  // Check login status whenever the tab navigator is focused
+  // Check login status whenever the tab navigator is focused or when params change
   useEffect(() => {
     const checkLoginStatus = async () => {
       const token = await SecureStore.getItemAsync('token');
+      const logoutTime = await SecureStore.getItemAsync('lastLogoutTime');
+      
+      // Update logout time if it changed
+      if (logoutTime !== lastLogoutTime) {
+        setLastLogoutTime(logoutTime);
+      }
+      
       setIsLoggedIn(!!token);
     };
 
@@ -44,8 +52,9 @@ const BottomTabNavigator = ({ navigation }) => {
     // Also check when the screen comes into focus
     const unsubscribe = navigation.addListener('focus', checkLoginStatus);
     return unsubscribe;
-  }, [navigation]);
+  }, [navigation, lastLogoutTime, route.params?.refresh]);
 
+  // Re-render tabs based on login state
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -54,6 +63,7 @@ const BottomTabNavigator = ({ navigation }) => {
         tabBarIcon: ({ focused }) => <TabIcon name={route.name} focused={focused} />,
         tabBarShowLabel: false,
       })}
+      key={isLoggedIn ? 'logged-in' : 'logged-out'} // Force re-render when login state changes
     >
       <Tab.Screen name="Home" component={LandingPage} />
       {isLoggedIn && (

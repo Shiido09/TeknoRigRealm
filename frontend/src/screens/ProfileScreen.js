@@ -56,7 +56,13 @@ const ProfileScreen = ({ navigation }) => {
     try {
       setLoading(true);
       await logout();
-      navigation.navigate('Home');
+      
+      // Reset navigation and pass refresh param to trigger state updates
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Main', params: { refresh: Date.now() } }],
+      });
+      
       Alert.alert('Logged Out', 'You have been successfully logged out.');
     } catch (error) {
       Alert.alert('Logout Failed', 'An error occurred during logout. Please try again.');

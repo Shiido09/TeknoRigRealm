@@ -189,6 +189,9 @@ export const logout = async () => {
     await SecureStore.deleteItemAsync('token');
     await SecureStore.deleteItemAsync('userId');
     
+    // Force a navigation reset by storing a timestamp to trigger app-wide updates
+    await SecureStore.setItemAsync('lastLogoutTime', Date.now().toString());
+    
     return { success: true };
   } catch (error) {
     console.error('Logout error:', error);
