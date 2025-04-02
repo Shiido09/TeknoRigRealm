@@ -131,6 +131,19 @@ export const styles = StyleSheet.create({
     fontSize: 14,
     color: '#4CAF50',
     fontWeight: 'bold',
+    marginBottom: 8, // Add margin to make room for the button
+  },
+  addToCartButton: {
+    backgroundColor: '#4CAF50',
+    borderRadius: 5,
+    padding: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addToCartButtonText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: 'bold',
   },
   noProductsContainer: {
     flex: 1,

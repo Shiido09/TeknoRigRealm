@@ -1,44 +1,73 @@
-import * as SQLite from 'expo-sqlite'; // Replace SecureStore with SQLite
+import * as SQLite from 'expo-sqlite';
 import { API_URL } from '../config/apiConfig';
+
+let db;
 
 // Initialize the SQLite database
 const initDatabase = async () => {
-  const db = await SQLite.openDatabaseAsync('teknorigAuth');
-  // Create table if it doesn't exist
-  await db.execAsync(`
-    CREATE TABLE IF NOT EXISTS secure_store (
-      key TEXT PRIMARY KEY NOT NULL,
-      value TEXT NOT NULL
-    );
-  `);
-  return db;
+  try {
+    if (!db) {
+      db = await SQLite.openDatabaseAsync('teknorigAuth.db');
+      
+      // Create table if it doesn't exist
+      await db.execAsync(`
+        PRAGMA journal_mode = WAL;
+        CREATE TABLE IF NOT EXISTS secure_store (
+          key TEXT PRIMARY KEY NOT NULL,
+          value TEXT NOT NULL
+        );
+      `);
+    }
+    return db;
+  } catch (error) {
+    console.error('Error initializing auth database:', error);
+    throw error;
+  }
 };
 
 // Helper function to set a key-value pair
 export const setItem = async (key, value) => {
-  const db = await initDatabase();
-  // Use REPLACE to handle both inserts and updates
-  await db.runAsync(
-    'REPLACE INTO secure_store (key, value) VALUES (?, ?)',
-    key,
-    value.toString()
-  );
+  try {
+    const database = await initDatabase();
+    
+    // Use REPLACE to handle both inserts and updates
+    await database.runAsync(
+      'REPLACE INTO secure_store (key, value) VALUES (?, ?)',
+      key,
+      value.toString()
+    );
+  } catch (error) {
+    console.error(`Error setting item ${key}:`, error);
+    throw error;
+  }
 };
 
 // Helper function to get a value by key
 export const getItem = async (key) => {
-  const db = await initDatabase();
-  const result = await db.getFirstAsync(
-    'SELECT value FROM secure_store WHERE key = ?',
-    key
-  );
-  return result ? result.value : null;
+  try {
+    const database = await initDatabase();
+    
+    const result = await database.getFirstAsync(
+      'SELECT value FROM secure_store WHERE key = ?',
+      key
+    );
+    
+    return result ? result.value : null;
+  } catch (error) {
+    console.error(`Error getting item ${key}:`, error);
+    return null;
+  }
 };
 
 // Helper function to delete a key-value pair
 export const deleteItem = async (key) => {
-  const db = await initDatabase();
-  await db.runAsync('DELETE FROM secure_store WHERE key = ?', key);
+  try {
+    const database = await initDatabase();
+    await database.runAsync('DELETE FROM secure_store WHERE key = ?', key);
+  } catch (error) {
+    console.error(`Error deleting item ${key}:`, error);
+    throw error;
+  }
 };
 
 /**
@@ -114,8 +143,11 @@ export const login = async (credentials) => {
       throw new Error(data.message || 'Login failed');
     }
 
-    // Store token in SQLite database
+    // Store token and user ID in SQLite database
     await setItem('token', data.token);
+    if (data.user && data.user._id) {
+      await setItem('userId', data.user._id);
+    }
 
     return data;
   } catch (error) {
@@ -225,9 +257,9 @@ export const logout = async () => {
       }
     }
     
-    // Clear stored credentials regardless of server response
+    // Only clear the token, keep userId for cart persistence
     await deleteItem('token');
-    await deleteItem('userId');
+    // await deleteItem('userId'); // Commented out to keep userId for cart data
     
     // Force a navigation reset by storing a timestamp to trigger app-wide updates
     await setItem('lastLogoutTime', Date.now().toString());

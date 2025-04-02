@@ -7,11 +7,13 @@ import {
   ScrollView, 
   Image, 
   FlatList,
-  ActivityIndicator
+  ActivityIndicator,
+  Alert
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
 import { getProducts } from '../redux/actions/productAction';
+import { initCartDB, addToCart } from '../utils/cartDatabase';
 import styles from '../styles/screens/ProductsScreenStyles';
 
 // Categories from backend
@@ -28,6 +30,13 @@ const ProductsScreen = ({ navigation }) => {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [priceRange, setPriceRange] = useState({ min: null, max: null });
+  const [addingToCart, setAddingToCart] = useState(false);
+
+  // Initialize cart database on component mount
+  useEffect(() => {
+    initCartDB()
+      .catch(error => console.error('Failed to initialize cart database:', error));
+  }, []);
 
   // Fetch products on component mount
   useEffect(() => {
@@ -61,6 +70,26 @@ const ProductsScreen = ({ navigation }) => {
     setFilteredProducts(filtered);
   }, [searchQuery, selectedCategory, products, priceRange]);
 
+  // Handle add to cart
+  const handleAddToCart = async (product, event) => {
+    event.stopPropagation(); // Prevent navigation to product detail
+    setAddingToCart(true);
+    
+    try {
+      const success = await addToCart(product);
+      if (success) {
+        Alert.alert('Success', `${product.product_name} added to cart!`);
+      } else {
+        Alert.alert('Error', 'Failed to add product to cart');
+      }
+    } catch (error) {
+      console.error('Add to cart error:', error);
+      Alert.alert('Error', 'Failed to add product to cart');
+    } finally {
+      setAddingToCart(false);
+    }
+  };
+
   // Render each product
   const renderProductItem = ({ item, index }) => {
     const isOddColumn = (index % 2) === 1;
@@ -78,6 +107,15 @@ const ProductsScreen = ({ navigation }) => {
         </View>
         <Text style={styles.productName} numberOfLines={2}>{item.product_name}</Text>
         <Text style={styles.productPrice}>₱{item.price.toFixed(2)}</Text>
+        <TouchableOpacity 
+          style={styles.addToCartButton}
+          onPress={(e) => handleAddToCart(item, e)}
+          disabled={addingToCart}
+        >
+          <Text style={styles.addToCartButtonText}>
+            Add to Cart
+          </Text>
+        </TouchableOpacity>
       </TouchableOpacity>
     );
   };
