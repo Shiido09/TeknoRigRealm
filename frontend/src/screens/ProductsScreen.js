@@ -14,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
 import { getProducts } from '../redux/actions/productAction';
 import { initCartDB, addToCart } from '../utils/cartDatabase';
+import { getItem } from '../services/authService';
 import styles from '../styles/screens/ProductsScreenStyles';
 
 // Categories from backend
@@ -31,6 +32,21 @@ const ProductsScreen = ({ navigation }) => {
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [priceRange, setPriceRange] = useState({ min: null, max: null });
   const [addingToCart, setAddingToCart] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  // Check login status
+  useEffect(() => {
+    const checkLoginStatus = async () => {
+      const token = await getItem('token');
+      setIsLoggedIn(!!token);
+    };
+    
+    checkLoginStatus();
+    
+    // Check login status when screen is focused
+    const unsubscribe = navigation.addListener('focus', checkLoginStatus);
+    return unsubscribe;
+  }, [navigation]);
 
   // Initialize cart database on component mount
   useEffect(() => {
@@ -107,15 +123,18 @@ const ProductsScreen = ({ navigation }) => {
         </View>
         <Text style={styles.productName} numberOfLines={2}>{item.product_name}</Text>
         <Text style={styles.productPrice}>₱{item.price.toFixed(2)}</Text>
-        <TouchableOpacity 
-          style={styles.addToCartButton}
-          onPress={(e) => handleAddToCart(item, e)}
-          disabled={addingToCart}
-        >
-          <Text style={styles.addToCartButtonText}>
-            Add to Cart
-          </Text>
-        </TouchableOpacity>
+        
+        {isLoggedIn && (
+          <TouchableOpacity 
+            style={styles.addToCartButton}
+            onPress={(e) => handleAddToCart(item, e)}
+            disabled={addingToCart}
+          >
+            <Text style={styles.addToCartButtonText}>
+              Add to Cart
+            </Text>
+          </TouchableOpacity>
+        )}
       </TouchableOpacity>
     );
   };
