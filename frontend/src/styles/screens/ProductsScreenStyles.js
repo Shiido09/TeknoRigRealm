@@ -65,6 +65,36 @@ export const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 14,
   },
+  priceRangeContainer: {
+    paddingHorizontal: 15,
+    marginBottom: 10,
+  },
+  priceInputsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 5,
+  },
+  priceInputWrapper: {
+    flex: 1,
+  },
+  priceInputLabel: {
+    color: '#AAAAAA',
+    fontSize: 12,
+    marginBottom: 5,
+  },
+  priceInput: {
+    backgroundColor: '#2A2A2A',
+    borderRadius: 8,
+    padding: 10,
+    color: '#FFFFFF',
+    fontSize: 14,
+  },
+  priceInputDividerText: {
+    marginHorizontal: 10,
+    color: '#FFFFFF',
+    fontSize: 16,
+  },
   productsGrid: {
     paddingHorizontal: 15,
     paddingBottom: 20,

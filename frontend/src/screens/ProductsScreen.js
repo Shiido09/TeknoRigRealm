@@ -14,8 +14,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import { getProducts } from '../redux/actions/productAction';
 import styles from '../styles/screens/ProductsScreenStyles';
 
-
-
 // Categories from backend
 const categories = [
   'All', 'Gaming PCs', 'Laptops', 'Components', 
@@ -29,13 +27,14 @@ const ProductsScreen = ({ navigation }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [filteredProducts, setFilteredProducts] = useState([]);
+  const [priceRange, setPriceRange] = useState({ min: null, max: null });
 
   // Fetch products on component mount
   useEffect(() => {
     dispatch(getProducts());
   }, [dispatch]);
 
-  // Filter products when searchQuery or selectedCategory changes
+  // Filter products when searchQuery, selectedCategory, or priceRange changes
   useEffect(() => {
     let filtered = products;
 
@@ -50,8 +49,17 @@ const ProductsScreen = ({ navigation }) => {
       );
     }
 
+    // Only filter by price if values are provided
+    if (priceRange.min !== null) {
+      filtered = filtered.filter(product => product.price >= priceRange.min);
+    }
+    
+    if (priceRange.max !== null) {
+      filtered = filtered.filter(product => product.price <= priceRange.max);
+    }
+
     setFilteredProducts(filtered);
-  }, [searchQuery, selectedCategory, products]); // Ensure proper dependencies
+  }, [searchQuery, selectedCategory, products, priceRange]);
 
   // Render each product
   const renderProductItem = ({ item, index }) => {
@@ -69,7 +77,7 @@ const ProductsScreen = ({ navigation }) => {
           />
         </View>
         <Text style={styles.productName} numberOfLines={2}>{item.product_name}</Text>
-        <Text style={styles.productPrice}>${item.price.toFixed(2)}</Text>
+        <Text style={styles.productPrice}>₱{item.price.toFixed(2)}</Text>
       </TouchableOpacity>
     );
   };
@@ -109,6 +117,42 @@ const ProductsScreen = ({ navigation }) => {
             </TouchableOpacity>
           ))}
         </ScrollView>
+      </View>
+
+      {/* Price Range Filter */}
+      <View style={styles.priceRangeContainer}>
+        <Text style={styles.categoriesTitle}>Price Range</Text>
+        <View style={styles.priceInputsContainer}>
+          <View style={styles.priceInputWrapper}>
+            <Text style={styles.priceInputLabel}>Min</Text>
+            <TextInput
+              style={styles.priceInput}
+              placeholder="Enter min price"
+              placeholderTextColor="#888888"
+              value={priceRange.min !== null ? priceRange.min.toString() : ''}
+              onChangeText={(text) => {
+                const value = text === '' ? null : Number(text);
+                setPriceRange({ ...priceRange, min: value });
+              }}
+              keyboardType="numeric"
+            />
+          </View>
+          <Text style={styles.priceInputDividerText}>-</Text>
+          <View style={styles.priceInputWrapper}>
+            <Text style={styles.priceInputLabel}>Max</Text>
+            <TextInput
+              style={styles.priceInput}
+              placeholder="Enter max price"
+              placeholderTextColor="#888888"
+              value={priceRange.max !== null ? priceRange.max.toString() : ''}
+              onChangeText={(text) => {
+                const value = text === '' ? null : Number(text);
+                setPriceRange({ ...priceRange, max: value });
+              }}
+              keyboardType="numeric"
+            />
+          </View>
+        </View>
       </View>
 
       {/* Loading and Error Handling */}
