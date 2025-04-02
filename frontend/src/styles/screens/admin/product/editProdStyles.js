@@ -79,7 +79,26 @@ const styles = StyleSheet.create({
         color: '#FFFFFF',
         fontSize: 16,
         fontWeight: 'bold',
-    }
+    },
+    imagesContainer: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        justifyContent: 'center',
+        marginVertical: 10,
+    },
+    productImage: {
+        width: 100,
+        height: 100,
+        margin: 5,
+        borderRadius: 8,
+        resizeMode: 'cover',
+    },
+    noImageText: {
+        textAlign: 'center',
+        color: '#888',
+        fontSize: 14,
+    },
+    
 });
 
 export default styles;
