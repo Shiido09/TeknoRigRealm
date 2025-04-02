@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, ScrollView, Image, TouchableOpacity } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import styles from '../../../styles/screens/admin/showProdStyles';
+import styles from '../../../styles/screens/admin/product/showProdStyles';
 
 const ShowProduct = ({ navigation, route }) => {
     const { product } = route.params;

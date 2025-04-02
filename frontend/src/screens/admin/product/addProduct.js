@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { MaterialIcons } from '@expo/vector-icons';
-import styles from '../../../styles/screens/admin/addProdStyles';
+import styles from '../../../styles/screens/admin/product/addProdStyles';
 
 const CATEGORIES = [
     'Gaming PCs',

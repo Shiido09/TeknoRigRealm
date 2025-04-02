@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, Image, Alert } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import styles from '../../../styles/screens/admin/displayProdStyles';
+import styles from '../../../styles/screens/admin/product/displayProdStyles';
 
 // Fake data for testing
 const FAKE_PRODUCTS = [
