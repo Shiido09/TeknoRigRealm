@@ -97,6 +97,33 @@ export const getCartItems = async () => {
   }
 };
 
+// Get cart items by IDs
+export const getCartItemsByIds = async (itemIds) => {
+  try {
+    if (!db) {
+      await initCartDB();
+    }
+    
+    if (!itemIds || itemIds.length === 0) {
+      return [];
+    }
+    
+    // Create placeholders for SQL query
+    const placeholders = itemIds.map(() => '?').join(',');
+    
+    // Get cart items by IDs
+    const items = await db.getAllAsync(
+      `SELECT * FROM cart_items WHERE id IN (${placeholders})`,
+      ...itemIds
+    );
+    
+    return items;
+  } catch (error) {
+    console.error('Error getting cart items by IDs:', error);
+    return [];
+  }
+};
+
 // Update cart item quantity
 export const updateCartItemQuantity = async (itemId, newQuantity) => {
   try {

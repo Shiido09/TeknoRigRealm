@@ -150,6 +150,47 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
+  checkboxContainer: {
+    marginRight: 10,
+    justifyContent: 'center',
+  },
+  checkbox: {
+    width: 22,
+    height: 22,
+    borderRadius: 4,
+    borderWidth: 2,
+    borderColor: '#4CAF50',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'white',
+  },
+  checkboxSelected: {
+    backgroundColor: '#4CAF50',
+  },
+  checkmark: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  selectAllContainer: {
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
+  },
+  selectAllButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  selectAllText: {
+    marginLeft: 10,
+    fontSize: 16,
+    color: '#333',
+  },
+  checkoutButtonDisabled: {
+    backgroundColor: '#A5D6A7',
+    opacity: 0.7,
+  },
 });
 
 export default styles;

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,95 +11,212 @@ import {
   TextInput,
   Modal
 } from 'react-native';
+import { useDispatch, useSelector } from 'react-redux';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { getItem } from '../services/authService';
+import { getItem, getUserById } from '../services/authService';
+import { getCartItemsByIds } from '../utils/cartDatabase';
+import { createOrder } from '../redux/actions/orderActions';
 import styles from '../styles/screens/CheckoutDetailsScreenStyles';
 
 const CheckoutDetailsScreen = ({ route, navigation }) => {
-  const { cartItems, subtotal, shipping, total } = route.params;
-  const [loading, setLoading] = useState(false);
+  const { selectedItemIds, subtotal, shipping, total } = route.params;
+  const [cartItems, setCartItems] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('cod');
   const [selectedCourier, setSelectedCourier] = useState('standard');
   
-  // Simplified to just one address
   const [address, setAddress] = useState({
-    label: 'Home',
-    address: '123 Main St, Anytown, PH 12345',
+    address: '',
+    phoneNo: '',
   });
   const [showAddressModal, setShowAddressModal] = useState(false);
-  const [newAddressLabel, setNewAddressLabel] = useState(address.label);
-  const [newAddressText, setNewAddressText] = useState(address.address);
+  const [newAddressText, setNewAddressText] = useState('');
+  const [newPhoneText, setNewPhoneText] = useState('');
 
-  // Payment methods with icons
+  const dispatch = useDispatch();
+  const orderCreate = useSelector(state => state.orderCreate);
+  const { loading: orderLoading, success: orderSuccess, error: orderError } = orderCreate;
+
   const paymentMethods = [
     { id: 'cod', name: 'Cash on Delivery', description: 'Pay when you receive your order', icon: '💵' },
     { id: 'card', name: 'Credit/Debit Card', description: 'Pay now with your card', icon: '💳' },
     { id: 'gcash', name: 'GCash', description: 'Pay with your GCash account', icon: '📱' }
   ];
 
-  // Courier options
   const courierOptions = [
-    { id: 'standard', name: 'Standard Delivery', price: 15.00, eta: '3-5 days', icon: '🚚' },
-    { id: 'express', name: 'Express Delivery', price: 25.00, eta: '1-2 days', icon: '⚡' }
+    { id: 'standard', name: 'Standard Delivery', price: 150.00, eta: '3-5 days', icon: '🚚' },
+    { id: 'express', name: 'Express Delivery', price: 200.00, eta: '1-2 days', icon: '🚀' }
   ];
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        const userId = await getItem('userId');
+        if (userId) {
+          const user = await getUserById(userId);
+          if (user) {
+            setAddress({
+              address: user.address || '',
+              phoneNo: user.phoneNo || '',
+            });
+            setNewAddressText(user.address || '');
+            setNewPhoneText(user.phoneNo || '');
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching user profile:', error);
+      }
+    };
+
+    fetchUserProfile();
+  }, []);
+
+  useEffect(() => {
+    const fetchCartItems = async () => {
+      try {
+        setLoading(true);
+        const items = await getCartItemsByIds(selectedItemIds);
+        const formattedItems = items.map(item => ({
+          id: item.id,
+          productId: item.productId, // Include the MongoDB product ID
+          name: item.productName,
+          price: item.price,
+          quantity: item.quantity,
+          imageUrl: item.imageUrl
+        }));
+        setCartItems(formattedItems);
+      } catch (error) {
+        console.error('Error fetching selected cart items:', error);
+        Alert.alert('Error', 'Failed to load checkout items');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCartItems();
+  }, [selectedItemIds]);
+
+  useEffect(() => {
+    if (orderSuccess) {
+      Alert.alert(
+        "Order Placed",
+        "Your order has been placed successfully!",
+        [{ 
+          text: "OK", 
+          onPress: () => navigation.navigate('MyOrders')
+        }]
+      );
+    }
+    if (orderError) {
+      Alert.alert(
+        "Order Error",
+        orderError,
+        [{ text: "OK" }]
+      );
+    }
+  }, [orderSuccess, orderError, navigation]);
 
   const getSelectedCourierPrice = () => {
     const courier = courierOptions.find(c => c.id === selectedCourier);
     return courier ? courier.price : shipping;
   };
 
-  // Calculate final total with selected courier
   const finalTotal = subtotal + getSelectedCourierPrice();
 
   const placeOrder = async () => {
-    setLoading(true);
+    if (!address.address) {
+      Alert.alert("Error", "Please add a delivery address");
+      return;
+    }
 
-    const token = await getItem('token');
-    const userId = await getItem('userId');
+    if (!address.phoneNo) {
+      Alert.alert("Error", "Please add a phone number");
+      return;
+    }
 
-    // Simulate API call
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      const userId = await getItem('userId');
+
+      // Format order items according to the schema
+      const formattedItems = cartItems.map(item => ({
+        quantity: item.quantity,
+        product: item.productId // Ensure this is the MongoDB `_id`
+      }));
+  
+      // Log for debugging
+      console.log('Order items being sent:', formattedItems);
+
+      // Get selected courier details
+      const courier = courierOptions.find(c => c.id === selectedCourier);
+
+      // Calculate the final total (subtotal + shipping fee)
+      const calculatedTotalPrice = subtotal + courier.price;
+
+      // Create order data object matching your schema
+      const orderData = {
+        // Shipping info with address and phone
+        shippingInfo: {
+          address: address.address,
+          phoneNo: address.phoneNo
+        },
+        // Order items with product reference and quantity
+        orderItems: formattedItems,
+        // Payment method from selection
+        PaymentMethod: selectedPaymentMethod === 'cod' ? 'Cash on Delivery' : 
+                      selectedPaymentMethod === 'card' ? 'Credit/Debit Card' : 'GCash',
+        // Courier information
+        Courier: [{
+          CourierName: courier.name,
+          shippingfee: courier.price
+        }],
+        // Total price (sum of product prices plus shipping)
+        totalPrice: calculatedTotalPrice,
+        // Add user to the order data (changed from userId to user to match schema)
+        user: userId
+      };
+
+      console.log('Sending order data:', JSON.stringify(orderData));
+      
+      // Dispatch order creation action
+      dispatch(createOrder(orderData));
+    } catch (error) {
+      console.error('Error in placeOrder function:', error);
+      const errorMessage = error.message || 'An unknown error occurred';
       Alert.alert(
-        "Order Placed",
-        "Your order has been placed successfully!",
-        [
-          { 
-            text: "OK", 
-            onPress: () => {
-              // Clear cart and navigate to orders
-              navigation.navigate('MyOrders');
-            } 
-          }
-        ]
+        "Order Error", 
+        `Failed to place order: ${errorMessage}. Please try again.`
       );
-    }, 2000);
+    }
   };
 
   const openAddressModal = () => {
-    setNewAddressLabel(address.label);
     setNewAddressText(address.address);
+    setNewPhoneText(address.phoneNo);
     setShowAddressModal(true);
   };
 
   const saveAddress = () => {
-    if (!newAddressLabel.trim() || !newAddressText.trim()) {
-      Alert.alert("Error", "Please fill in all fields");
+    if (!newAddressText.trim()) {
+      Alert.alert("Error", "Please fill in the address field");
+      return;
+    }
+
+    if (!newPhoneText.trim()) {
+      Alert.alert("Error", "Please fill in the phone number field");
       return;
     }
 
     setAddress({
-      label: newAddressLabel,
       address: newAddressText,
+      phoneNo: newPhoneText,
     });
     setShowAddressModal(false);
   };
 
   const renderCartItem = ({ item }) => (
     <View style={styles.cartItem}>
-      {/* Placeholder image for products */}
       <Image 
-        source={{ uri: 'https://via.placeholder.com/150/222222/FFFFFF?text=Product' }} 
+        source={{ uri: item.imageUrl || 'https://via.placeholder.com/150/222222/FFFFFF?text=Product' }} 
         style={styles.itemImage} 
       />
       <View style={styles.itemDetails}>
@@ -122,7 +239,6 @@ const CheckoutDetailsScreen = ({ route, navigation }) => {
       </View>
 
       <ScrollView style={styles.scrollView}>
-        {/* Order Items Review */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Order Items</Text>
@@ -136,7 +252,6 @@ const CheckoutDetailsScreen = ({ route, navigation }) => {
           />
         </View>
 
-        {/* Simplified Delivery Address Section */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Delivery Address</Text>
@@ -146,15 +261,12 @@ const CheckoutDetailsScreen = ({ route, navigation }) => {
           </View>
           <View style={styles.selectionCard}>
             <View style={styles.cardContent}>
-              <View style={styles.addressHeader}>
-                <Text style={styles.cardTitle}>{address.label}</Text>
-              </View>
-              <Text style={styles.cardDescription}>{address.address}</Text>
+              <Text style={styles.cardDescription}>{address.address || 'No address set'}</Text>
+              <Text style={styles.cardDescription}>Phone: {address.phoneNo || 'No phone number set'}</Text>
             </View>
           </View>
         </View>
 
-        {/* Payment Method Section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Payment Method</Text>
           {paymentMethods.map(method => (
@@ -183,7 +295,6 @@ const CheckoutDetailsScreen = ({ route, navigation }) => {
           ))}
         </View>
 
-        {/* Courier Selection */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Delivery Method</Text>
           {courierOptions.map(courier => (
@@ -213,11 +324,9 @@ const CheckoutDetailsScreen = ({ route, navigation }) => {
           ))}
         </View>
 
-        {/* Enhanced Order Summary with product details */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Order Summary</Text>
           <View style={styles.summaryContainer}>
-            {/* Product details in summary */}
             {cartItems.map(item => (
               <View key={item.id} style={styles.summaryRow}>
                 <Text style={styles.summaryLabel}>
@@ -245,18 +354,17 @@ const CheckoutDetailsScreen = ({ route, navigation }) => {
         </View>
       </ScrollView>
 
-      {/* Place Order Button */}
       <View style={styles.bottomContainer}>
         <View style={styles.totalPreviewContainer}>
           <Text style={styles.totalPreviewLabel}>Total</Text>
           <Text style={styles.totalPreviewValue}>₱{finalTotal.toFixed(2)}</Text>
         </View>
         <TouchableOpacity 
-          style={[styles.placeOrderButton, loading && styles.disabledButton]}
+          style={[styles.placeOrderButton, (loading || orderLoading) && styles.disabledButton]}
           onPress={placeOrder}
-          disabled={loading}
+          disabled={loading || orderLoading}
         >
-          {loading ? (
+          {orderLoading ? (
             <ActivityIndicator color="#FFFFFF" />
           ) : (
             <Text style={styles.placeOrderButtonText}>Place Order</Text>
@@ -264,7 +372,6 @@ const CheckoutDetailsScreen = ({ route, navigation }) => {
         </TouchableOpacity>
       </View>
 
-      {/* Address Edit Modal */}
       <Modal
         visible={showAddressModal}
         transparent={true}
@@ -273,17 +380,6 @@ const CheckoutDetailsScreen = ({ route, navigation }) => {
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Edit Address</Text>
-            
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Label</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="e.g. Home, Work, etc."
-                placeholderTextColor="#777777"
-                value={newAddressLabel}
-                onChangeText={setNewAddressLabel}
-              />
-            </View>
             
             <View style={styles.inputGroup}>
               <Text style={styles.inputLabel}>Full Address</Text>
@@ -295,6 +391,18 @@ const CheckoutDetailsScreen = ({ route, navigation }) => {
                 onChangeText={setNewAddressText}
                 multiline
                 numberOfLines={3}
+              />
+            </View>
+            
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Phone Number</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter your phone number"
+                placeholderTextColor="#777777"
+                value={newPhoneText}
+                onChangeText={setNewPhoneText}
+                keyboardType="phone-pad"
               />
             </View>
             

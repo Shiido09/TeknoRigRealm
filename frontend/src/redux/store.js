@@ -1,9 +1,17 @@
 import { configureStore } from "@reduxjs/toolkit";
-import { productReducer } from "./reducers/productReducer"; // Ensure named import
+import { productReducer } from "./reducers/productReducer";
+import { 
+  orderCreateReducer, 
+  orderDetailsReducer, 
+  orderListMyReducer 
+} from "./reducers/orderReducers";
 
 const store = configureStore({
   reducer: {
-    productState: productReducer, // Ensure this is a valid reducer
+    productState: productReducer,
+    orderCreate: orderCreateReducer,
+    orderDetails: orderDetailsReducer,
+    orderListMy: orderListMyReducer,
   },
 });
 
