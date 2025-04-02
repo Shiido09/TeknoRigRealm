@@ -114,6 +114,13 @@ const ProfileScreen = ({ navigation }) => {
           
           <TouchableOpacity 
             style={styles.menuItem}
+            onPress={() => navigation.navigate('Cart')}
+          >
+            <Text style={styles.menuItemText}>My Cart</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.menuItem}
             onPress={() => navigation.navigate('MyOrders')}
           >
             <Text style={styles.menuItemText}>My Orders</Text>

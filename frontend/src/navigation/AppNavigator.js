@@ -12,6 +12,8 @@ import ProductsScreen from '../screens/ProductsScreen';
 import ProductDetailScreen from '../screens/ProductDetailScreen';
 import ProfileDetailsScreen from '../screens/ProfileDetailsScreen';
 import MyOrdersScreen from '../screens/MyOrdersScreen';
+import CartScreen from '../screens/CartScreen';
+import CheckoutDetailsScreen from '../screens/CheckoutDetailsScreen';
 
 const Stack = createStackNavigator();
 
@@ -38,7 +40,6 @@ const AppNavigator = () => {
         <Stack.Screen 
           name="Main" 
           component={BottomTabNavigator}
-          // Using a key prop to force remount when needed
           options={({ route }) => ({
             key: route.params?.key || 'default',
           })}
@@ -49,7 +50,8 @@ const AppNavigator = () => {
         <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
         <Stack.Screen name="ProfileDetails" component={ProfileDetailsScreen} />
         <Stack.Screen name="MyOrders" component={MyOrdersScreen} />
-        {/* Add other non-tab screens here */}
+        <Stack.Screen name="Cart" component={CartScreen} />
+        <Stack.Screen name="CheckoutDetails" component={CheckoutDetailsScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );
