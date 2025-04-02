@@ -13,6 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as SecureStore from 'expo-secure-store';
 import styles from '../styles/screens/LandingPageStyles';
+import { logout } from '../services/authService'; // Import the logout service
 
 const LandingPage = ({ navigation }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -52,12 +53,20 @@ const LandingPage = ({ navigation }) => {
   const drawerItems = [
     { title: 'My Profile', onPress: () => navigation.navigate('Me') },
     { title: 'My Orders', onPress: () => navigation.navigate('MyOrders') },
-    { title: 'Wishlist', onPress: () => console.log('Wishlist pressed') },
-    { title: 'Settings', onPress: () => console.log('Settings pressed') },
+    { title: 'Cart', onPress: () => navigation.navigate('Cart') }, // Update to properly navigate to the Cart screen
     { title: 'Log Out', onPress: async () => {
-      await SecureStore.deleteItemAsync('token');
-      setIsLoggedIn(false);
-      toggleDrawer();
+      try {
+        await logout(); // Use the proper logout function instead
+        setIsLoggedIn(false);
+        toggleDrawer();
+        // Force navigation reset to refresh the tabs
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'Main', params: { refresh: Date.now() } }],
+        });
+      } catch (error) {
+        console.error('Logout error:', error);
+      }
     }},
   ];
 

@@ -66,12 +66,12 @@ const BottomTabNavigator = ({ navigation, route }) => {
       key={isLoggedIn ? 'logged-in' : 'logged-out'} // Force re-render when login state changes
     >
       <Tab.Screen name="Home" component={LandingPage} />
-      {isLoggedIn && (
+      {isLoggedIn ? (
         <>
           <Tab.Screen name="Notification" component={NotificationScreen} />
           <Tab.Screen name="Me" component={ProfileScreen} />
         </>
-      )}
+      ) : null}
     </Tab.Navigator>
   );
 };
