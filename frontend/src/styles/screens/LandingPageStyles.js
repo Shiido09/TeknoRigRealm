@@ -35,6 +35,9 @@ export const styles = StyleSheet.create({
   registerButton: {
     backgroundColor: '#4CAF50',
   },
+  profileButton: {
+    backgroundColor: '#4CAF50',
+  },
   authButtonText: {
     color: '#FFFFFF',
     fontSize: 12,

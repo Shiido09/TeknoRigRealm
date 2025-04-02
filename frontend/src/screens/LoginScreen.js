@@ -6,20 +6,33 @@ import {
   TouchableOpacity, 
   KeyboardAvoidingView, 
   Platform,
-  ScrollView
+  ScrollView,
+  Alert,
+  ActivityIndicator
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import * as SecureStore from 'expo-secure-store'; // Import SecureStore
 import styles from '../styles/screens/LoginScreenStyles';
+import { login } from '../services/authService';
 
 const LoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = () => {
-    // Login logic would go here
-    console.log('Login attempt with:', { email, password });
-    // For now, just navigate back
-    navigation.goBack();
+  const handleLogin = async () => {
+    try {
+      setIsLoading(true);
+      const data = await login({ email, password });
+      await SecureStore.setItemAsync('token', data.token); // Store token in SecureStore
+      await SecureStore.setItemAsync('userId', data._id); // Store user ID in SecureStore
+      Alert.alert('Login Successful', 'Welcome back!');
+      navigation.navigate('Main'); 
+    } catch (error) {
+      Alert.alert('Login Failed', error.message || 'Invalid credentials');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -63,10 +76,15 @@ const LoginScreen = ({ navigation }) => {
             </TouchableOpacity>
             
             <TouchableOpacity 
-              style={styles.loginButton}
+              style={[styles.loginButton, isLoading && { opacity: 0.7 }]}
               onPress={handleLogin}
+              disabled={isLoading}
             >
-              <Text style={styles.loginButtonText}>Login</Text>
+              {isLoading ? (
+                <ActivityIndicator color="#FFFFFF" />
+              ) : (
+                <Text style={styles.loginButtonText}>Login</Text>
+              )}
             </TouchableOpacity>
             
             <View style={styles.registerContainer}>

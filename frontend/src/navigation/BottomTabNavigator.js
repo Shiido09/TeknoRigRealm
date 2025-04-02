@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Text, View } from 'react-native';
+import * as SecureStore from 'expo-secure-store';
 
 // Import screens
 import LandingPage from '../screens/LandingPage';
@@ -28,7 +29,23 @@ const TabIcon = ({ name, focused }) => {
   );
 };
 
-const BottomTabNavigator = () => {
+const BottomTabNavigator = ({ navigation }) => {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  // Check login status whenever the tab navigator is focused
+  useEffect(() => {
+    const checkLoginStatus = async () => {
+      const token = await SecureStore.getItemAsync('token');
+      setIsLoggedIn(!!token);
+    };
+
+    checkLoginStatus();
+
+    // Also check when the screen comes into focus
+    const unsubscribe = navigation.addListener('focus', checkLoginStatus);
+    return unsubscribe;
+  }, [navigation]);
+
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -39,8 +56,12 @@ const BottomTabNavigator = () => {
       })}
     >
       <Tab.Screen name="Home" component={LandingPage} />
-      <Tab.Screen name="Notification" component={NotificationScreen} />
-      <Tab.Screen name="Me" component={ProfileScreen} />
+      {isLoggedIn && (
+        <>
+          <Tab.Screen name="Notification" component={NotificationScreen} />
+          <Tab.Screen name="Me" component={ProfileScreen} />
+        </>
+      )}
     </Tab.Navigator>
   );
 };

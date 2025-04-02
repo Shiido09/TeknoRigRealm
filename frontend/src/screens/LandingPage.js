@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -8,9 +8,29 @@ import {
   StatusBar
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import * as SecureStore from 'expo-secure-store';
 import styles from '../styles/screens/LandingPageStyles';
 
 const LandingPage = ({ navigation }) => {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    // Check if user is logged in on component mount
+    const checkLoginStatus = async () => {
+      const token = await SecureStore.getItemAsync('token');
+      setIsLoggedIn(!!token); // Convert to boolean
+    };
+
+    checkLoginStatus();
+
+    // Listen for navigation focus to update login status
+    const unsubscribe = navigation.addListener('focus', () => {
+      checkLoginStatus();
+    });
+
+    return unsubscribe;
+  }, [navigation]);
+
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       <StatusBar barStyle="light-content" backgroundColor="#121212" />
@@ -20,18 +40,31 @@ const LandingPage = ({ navigation }) => {
         <View style={styles.header}>
           <Text style={styles.logo}>TeknorigRealm</Text>
           <View style={styles.headerRight}>
-            <TouchableOpacity 
-              style={styles.authButton} 
-              onPress={() => navigation.navigate('Login')}
-            >
-              <Text style={styles.authButtonText}>Login</Text>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={[styles.authButton, styles.registerButton]} 
-              onPress={() => navigation.navigate('Register')}
-            >
-              <Text style={styles.authButtonText}>Register</Text>
-            </TouchableOpacity>
+            {isLoggedIn ? (
+              // Show profile button when logged in
+              <TouchableOpacity 
+                style={[styles.authButton, styles.profileButton]} 
+                onPress={() => navigation.navigate('Me')}
+              >
+                <Text style={styles.authButtonText}>My Profile</Text>
+              </TouchableOpacity>
+            ) : (
+              // Show login/register buttons when logged out
+              <>
+                <TouchableOpacity 
+                  style={styles.authButton} 
+                  onPress={() => navigation.navigate('Login')}
+                >
+                  <Text style={styles.authButtonText}>Login</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={[styles.authButton, styles.registerButton]} 
+                  onPress={() => navigation.navigate('Register')}
+                >
+                  <Text style={styles.authButtonText}>Register</Text>
+                </TouchableOpacity>
+              </>
+            )}
           </View>
         </View>
         

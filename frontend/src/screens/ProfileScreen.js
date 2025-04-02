@@ -1,8 +1,87 @@
-import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import * as SecureStore from 'expo-secure-store';
+import { getUserById, logout } from '../services/authService';
+import { API_URL } from '../config/apiConfig';
 
-const ProfileScreen = () => {
+const ProfileScreen = ({ navigation }) => {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const userId = await SecureStore.getItemAsync('userId');
+        const token = await SecureStore.getItemAsync('token');
+        
+        if (!token) {
+          throw new Error('You are not logged in');
+        }
+        
+        if (userId) {
+          const userData = await getUserById(userId);
+          setUser(userData);
+        } else {
+          const response = await fetch(`${API_URL}/users/profile`, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          
+          const data = await response.json();
+          
+          if (!response.ok) {
+            throw new Error(data.message || 'Failed to fetch user profile');
+          }
+          
+          setUser(data.user);
+          if (data.user._id) {
+            await SecureStore.setItemAsync('userId', data.user._id);
+          }
+        }
+      } catch (error) {
+        console.error('Profile fetch error:', error);
+        Alert.alert('Error', error.message || 'Failed to fetch user data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      setLoading(true);
+      await logout();
+      navigation.navigate('Home');
+      Alert.alert('Logged Out', 'You have been successfully logged out.');
+    } catch (error) {
+      Alert.alert('Logout Failed', 'An error occurred during logout. Please try again.');
+      console.error('Logout error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <ActivityIndicator size="large" color="#4CAF50" />
+      </SafeAreaView>
+    );
+  }
+
+  if (!user) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <Text style={styles.errorText}>Failed to load user data</Text>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       <ScrollView>
@@ -12,34 +91,36 @@ const ProfileScreen = () => {
         
         <View style={styles.profileSection}>
           <Image 
-            source={{ uri: 'https://via.placeholder.com/150/222222/FFFFFF?text=User' }} 
+            source={{ uri: user?.avatar?.url || 'https://via.placeholder.com/150/222222/FFFFFF?text=User' }} 
             style={styles.profileImage} 
           />
-          <Text style={styles.userName}>John Doe</Text>
-          <Text style={styles.userEmail}>john.doe@example.com</Text>
-          <TouchableOpacity style={styles.editButton}>
-            <Text style={styles.editButtonText}>Edit Profile</Text>
-          </TouchableOpacity>
+          <Text style={styles.userName}>{user?.name}</Text>
+          <Text style={styles.userEmail}>{user?.email}</Text>
         </View>
         
         <View style={styles.menuSection}>
-          <TouchableOpacity style={styles.menuItem}>
+          <TouchableOpacity 
+            style={styles.menuItem}
+            onPress={() => navigation.navigate('ProfileDetails', { user })}
+          >
+            <Text style={styles.menuItemText}>Profile Details</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.menuItem}
+            onPress={() => navigation.navigate('MyOrders')}
+          >
             <Text style={styles.menuItemText}>My Orders</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.menuItem}>
-            <Text style={styles.menuItemText}>Shipping Addresses</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.menuItem}>
-            <Text style={styles.menuItemText}>Payment Methods</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.menuItem}>
-            <Text style={styles.menuItemText}>Wishlist</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.menuItem}>
-            <Text style={styles.menuItemText}>Settings</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.menuItem, styles.logoutItem]}>
-            <Text style={[styles.menuItemText, styles.logoutText]}>Logout</Text>
+          
+          <TouchableOpacity 
+            style={[styles.menuItem, styles.logoutItem]} 
+            onPress={handleLogout}
+            disabled={loading}
+          >
+            <Text style={[styles.menuItemText, styles.logoutText]}>
+              {loading ? 'Logging out...' : 'Log Out'}
+            </Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -84,16 +165,6 @@ const styles = StyleSheet.create({
     color: '#AAAAAA',
     marginBottom: 15,
   },
-  editButton: {
-    backgroundColor: '#444444',
-    paddingVertical: 8,
-    paddingHorizontal: 20,
-    borderRadius: 20,
-  },
-  editButtonText: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-  },
   menuSection: {
     padding: 15,
   },
@@ -112,6 +183,12 @@ const styles = StyleSheet.create({
   },
   logoutText: {
     color: '#FF6B6B',
+  },
+  errorText: {
+    color: '#FF6B6B',
+    fontSize: 16,
+    textAlign: 'center',
+    marginTop: 20,
   },
 });
 
