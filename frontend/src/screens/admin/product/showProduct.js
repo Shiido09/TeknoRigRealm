@@ -1,10 +1,38 @@
-import React from 'react';
-import { View, Text, ScrollView, Image, TouchableOpacity } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, Text, ScrollView, Image, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { useDispatch, useSelector } from 'react-redux';
 import { MaterialIcons } from '@expo/vector-icons';
+import { getProductById } from '../../../redux/actions/productAction';
 import styles from '../../../styles/screens/admin/product/showProdStyles';
 
 const ShowProduct = ({ navigation, route }) => {
-    const { product } = route.params;
+    const { productId } = route.params; // Assuming productId is passed via route params
+    const dispatch = useDispatch();
+
+    const { loading, product, error } = useSelector((state) => state.productState);
+
+    useEffect(() => {
+        dispatch(getProductById(productId));
+    }, [dispatch, productId]);
+
+    if (loading) {
+        return (
+            <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color="#4CAF50" />
+            </View>
+        );
+    }
+
+    if (error) {
+        return (
+            <View style={styles.errorContainer}>
+                <Text style={styles.errorText}>Error: {error}</Text>
+                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+                    <Text style={styles.backButtonText}>Go Back</Text>
+                </TouchableOpacity>
+            </View>
+        );
+    }
 
     return (
         <View style={styles.container}>
@@ -46,7 +74,10 @@ const ShowProduct = ({ navigation, route }) => {
                 <View style={styles.detailsContainer}>
                     <View style={styles.detailSection}>
                         <Text style={styles.productName}>{product.product_name}</Text>
-                        <Text style={styles.productPrice}>₱{product.price.toFixed(2)}</Text>
+                        <Text style={styles.productPrice}>
+                            ₱{Number(product?.price || 0).toFixed(2)}
+                        </Text>
+
                     </View>
 
                     <View style={styles.detailSection}>
