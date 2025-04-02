@@ -29,22 +29,23 @@ const orderSchema = new mongoose.Schema({
       }
     }
   ],
-  paymentInfo: {
-    id: {
-      type: String
-    },
-    status: {
-      type: String
-    }
-  },
-  paidAt: {
-    type: Date
-  },
-  shippingPrice: {
-    type: Number,
+  PaymentMethod: {
+    type: String,
     required: true,
-    default: 0.0
+    default: 'Cash on Delivery'
   },
+  Courier:[
+    {
+      CourierName: {
+        type: String,
+        required: true
+      },
+      shippingfee: {
+        type: Number,
+        required: true
+      },
+    }
+  ],
   totalPrice: {
     type: Number,
     required: true,
