@@ -11,6 +11,8 @@ import RegisterScreen from '../screens/RegisterScreen';
 import ProductsScreen from '../screens/ProductsScreen';
 import ProductDetailScreen from '../screens/ProductDetailScreen';
 import ProfileDetailsScreen from '../screens/ProfileDetailsScreen';
+import CartScreen from '../screens/CartScreen';
+import CheckoutDetailsScreen from '../screens/CheckoutDetailsScreen';
 import MyOrdersScreen from '../screens/MyOrdersScreen';
 
 const Stack = createStackNavigator();
