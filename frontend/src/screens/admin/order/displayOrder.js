@@ -1,50 +1,32 @@
-import React, { useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, Alert, ScrollView } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { View, Text, FlatList, TouchableOpacity, Alert, ScrollView, ActivityIndicator } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
+import { getAllOrders } from '../../../redux/actions/orderActions'; // Import the Redux action
 import styles from '../../../styles/screens/admin/order/displayOrderStyles';
-
-// Fake data for testing
-const FAKE_ORDERS = [
-    {
-        id: '1',
-        user: {
-            id: 'user1',
-            name: 'John Doe'
-        },
-        orderItems: [
-            {
-                product: {
-                    product_name: 'Gaming PC RTX 4090',
-                    price: 159999.99
-                },
-                quantity: 1
-            }
-        ],
-        totalPrice: 159999.99,
-        orderStatus: 'Processing',
-        shippingInfo: {
-            address: '123 Main St, City',
-            phoneNo: '1234567890'
-        },
-        paidAt: new Date(),
-        createdAt: new Date()
-    },
-    // Add more fake orders as needed
-];
 
 const ORDER_STATUSES = ['Processing', 'Shipped', 'Delivered', 'Cancelled'];
 
 const AdminOrderScreen = ({ navigation }) => {
-    const [orders, setOrders] = useState(FAKE_ORDERS);
+    const dispatch = useDispatch();
+
+    // Access orders and loading/error state from Redux
+    const { loading, orders, error } = useSelector(state => state.adminOrders);
+
     const [selectedStatus, setSelectedStatus] = useState('All');
 
-    const filteredOrders = selectedStatus === 'All' 
-        ? orders 
+    // Fetch orders when the component mounts
+    useEffect(() => {
+        dispatch(getAllOrders());
+    }, [dispatch]);
+
+    const filteredOrders = selectedStatus === 'All'
+        ? orders
         : orders.filter(order => order.orderStatus === selectedStatus);
 
     const renderStatusFilter = () => (
-        <ScrollView 
-            horizontal 
+        <ScrollView
+            horizontal
             showsHorizontalScrollIndicator={false}
             style={styles.filterContainer}
         >
@@ -78,33 +60,29 @@ const AdminOrderScreen = ({ navigation }) => {
             ))}
         </ScrollView>
     );
-    const updateOrderStatus = (orderId, currentStatus) => {
-        Alert.alert(
-            "Update Order Status",
-            "Select new status:",
-            ORDER_STATUSES.map(status => ({
-                text: status,
-                onPress: () => {
-                    if (status !== currentStatus) {
-                        setOrders(orders.map(order => 
-                            order.id === orderId 
-                                ? {...order, orderStatus: status}
-                                : order
-                        ));
-                        Alert.alert(
-                            "Success",
-                            "Order status updated successfully",
-                            [{ text: "OK" }]
-                        );
-                    }
-                }
-            })),
-            { cancelable: true }
-        );
-    };
+
+    // const updateOrderStatus = (orderId, currentStatus) => {
+    //     Alert.alert(
+    //         "Update Order Status",
+    //         "Select new status:",
+    //         ORDER_STATUSES.map(status => ({
+    //             text: status,
+    //             onPress: () => {
+    //                 if (status !== currentStatus) {
+    //                     Alert.alert(
+    //                         "Success",
+    //                         "Order status updated successfully",
+    //                         [{ text: "OK" }]
+    //                     );
+    //                 }
+    //             }
+    //         })),
+    //         { cancelable: true }
+    //     );
+    // };
 
     const getStatusColor = (status) => {
-        switch(status) {
+        switch (status) {
             case 'Processing': return '#FFA000';
             case 'Shipped': return '#2196F3';
             case 'Delivered': return '#4CAF50';
@@ -117,7 +95,7 @@ const AdminOrderScreen = ({ navigation }) => {
         <View style={styles.orderCard}>
             <View style={styles.orderHeader}>
                 <Text style={styles.orderNumber}>Order #{item.id}</Text>
-                <TouchableOpacity 
+                <TouchableOpacity
                     style={[styles.statusBadge, { backgroundColor: getStatusColor(item.orderStatus) }]}
                     onPress={() => updateOrderStatus(item.id, item.orderStatus)}
                 >
@@ -141,6 +119,20 @@ const AdminOrderScreen = ({ navigation }) => {
                 <View style={styles.infoRow}>
                     <MaterialIcons name="phone" size={20} color="#AAAAAA" />
                     <Text style={styles.infoValue}>{item.shippingInfo.phoneNo}</Text>
+                </View>
+
+                <View style={styles.infoRow}>
+                    <MaterialIcons name="payment" size={20} color="#AAAAAA" />
+                    <Text style={styles.infoLabel}>Payment Method:</Text>
+                    <Text style={styles.infoValue}>{item.PaymentMethod}</Text>
+                </View>
+
+                <View style={styles.infoRow}>
+                    <MaterialIcons name="local-shipping" size={20} color="#AAAAAA" />
+                    <Text style={styles.infoLabel}>Courier:</Text>
+                    <Text style={styles.infoValue}>
+                        {(item.Courier || []).map(c => `${c.CourierName} (₱${c.shippingfee})`).join(', ')}
+                    </Text>
                 </View>
 
                 <View style={styles.orderItems}>
@@ -171,9 +163,22 @@ const AdminOrderScreen = ({ navigation }) => {
                         Paid on: {new Date(item.paidAt).toLocaleDateString()}
                     </Text>
                 )}
+                {item.deliveredAt && (
+                    <Text style={styles.dateText}>
+                        Delivered on: {new Date(item.deliveredAt).toLocaleDateString()}
+                    </Text>
+                )}
             </View>
         </View>
     );
+
+    if (loading) {
+        return <ActivityIndicator size="large" color="#0000ff" />;
+    }
+
+    if (error) {
+        return <Text style={styles.errorText}>{error}</Text>;
+    }
 
     return (
         <View style={styles.container}>

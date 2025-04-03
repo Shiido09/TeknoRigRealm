@@ -9,9 +9,65 @@ import {
   ORDER_DETAILS_FAIL,
   ORDER_LIST_MY_REQUEST,
   ORDER_LIST_MY_SUCCESS,
-  ORDER_LIST_MY_FAIL
+  ORDER_LIST_MY_FAIL,
+  ADMIN_ORDERS_REQUEST,
+  ADMIN_ORDERS_SUCCESS,
+  ADMIN_ORDERS_FAIL,
 } from '../constants/orderConstants';
 import { getItem } from '../../services/authService';
+// Fetch all orders for admin
+export const getAllOrders = () => async (dispatch) => {
+  try {
+    dispatch({ type: ADMIN_ORDERS_REQUEST });
+
+    const { data } = await axios.get(`${API_URL}/orders/getAllOrders`);
+
+    dispatch({
+      type: ADMIN_ORDERS_SUCCESS,
+      payload: data.orders,
+    });
+  } catch (error) {
+    dispatch({
+      type: ADMIN_ORDERS_FAIL,
+      payload:
+        error.response && error.response.data.message
+          ? error.response.data.message
+          : error.message,
+    });
+  }
+};
+
+// export const getAllOrders = () => async (dispatch, getState) => {
+//   try {
+//     dispatch({ type: ADMIN_ORDERS_REQUEST });
+
+//     const {
+//       userLogin: { userInfo },
+//     } = getState();
+
+//     const config = {
+//       headers: {
+//         Authorization: `Bearer ${userInfo.token}`,
+//       },
+//     };
+
+//     const { data } = await axios.get('${API_URL}/orders', config);
+
+//     dispatch({
+//       type: ADMIN_ORDERS_SUCCESS,
+//       payload: data.orders,
+//     });
+//   } catch (error) {
+//     dispatch({
+//       type: ADMIN_ORDERS_FAIL,
+//       payload:
+//         error.response && error.response.data.message
+//           ? error.response.data.message
+//           : error.message,
+//     });
+//   }
+// };
+
 
 // Create new order
 export const createOrder = (orderData) => async (dispatch) => {

@@ -220,5 +220,47 @@ export const getOrderById = async (req, res) => {
   }
 };
 
+// // Get all orders (Admin only)
+// export const getAllOrders = async (req, res) => {
+//   try {
+//     // Ensure the user is an admin
+//     if (!req.user.isAdmin) {
+//       return res.status(403).json({
+//         success: false,
+//         message: 'Not authorized to access this resource',
+//       });
+//     }
 
+//     const orders = await Order.find()
+//       .populate('user', 'name email')
+//       .populate('orderItems.product', 'product_name product_images price');
 
+//     res.status(200).json({
+//       success: true,
+//       orders,
+//     });
+//   } catch (error) {
+//     res.status(500).json({
+//       success: false,
+//       message: error.message,
+//     });
+//   }
+// };
+
+export const getAllOrders = async (req, res) => {
+  try {
+    const orders = await Order.find()
+      .populate('user', 'name email')
+      .populate('orderItems.product', 'product_name product_images price');
+
+    res.status(200).json({
+      success: true,
+      orders,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
