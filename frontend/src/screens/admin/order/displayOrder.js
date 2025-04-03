@@ -190,7 +190,13 @@ const AdminOrderScreen = ({ navigation }) => {
         <View style={styles.container}>
             <View>
                 <View style={styles.header}>
-                    <Text style={styles.title}>Orders</Text>
+                    <TouchableOpacity
+                        style={styles.backButton}
+                        onPress={() => navigation.navigate('dashboard')} // Navigate back to the dashboard
+                    >
+                        <MaterialIcons name="arrow-back" size={24} color="#FFFFFF" />
+                    </TouchableOpacity>
+                    <Text style={styles.title}>Orders ({filteredOrders.length})</Text>
                 </View>
                 {renderStatusFilter()}
             </View>

@@ -109,6 +109,34 @@ const styles = StyleSheet.create({
         fontSize: 16,
         textAlign: 'center',
     },
+    filterContainer: {
+        paddingVertical: 8,
+        paddingHorizontal: 15,
+        backgroundColor: '#1A1A1A',
+        height: 44,
+    },
+    filterChip: {
+        paddingHorizontal: 10,
+        paddingVertical: 4,   
+        borderRadius: 12,     
+        marginRight: 8,
+        backgroundColor: '#2A2A2A',
+        height: 28,        
+        justifyContent: 'center', 
+    },
+    filterChipActive: {
+        backgroundColor: '#4CAF50',
+    },
+    filterText: {
+        color: '#FFFFFF',
+        fontSize: 11,       
+        lineHeight: 16,    
+    },
+    filterTextActive: {
+        color: '#FFFFFF',
+        fontWeight: 'bold',
+    },
+    
 });
 
 export default styles;

@@ -1,30 +1,41 @@
-
-import React, { useEffect } from 'react';
-import { View, Text, FlatList, TouchableOpacity, Image, Alert, ActivityIndicator } from 'react-native';
+import React, { useEffect, useState, useCallback } from 'react';
+import { View, Text, FlatList, TouchableOpacity, Image, Alert, ActivityIndicator, ScrollView } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { getProducts, deleteProduct } from '../../../redux/actions/productAction';
 import styles from '../../../styles/screens/admin/product/displayProdStyles';
 
+const CATEGORIES = [
+    'All',
+    'Gaming PCs',
+    'Laptops',
+    'Components',
+    'Peripherals',
+    'Displays',
+    'Networking',
+    'Storage',
+    'Audio',
+];
+
 const AdminProductScreen = ({ navigation }) => {
     const dispatch = useDispatch();
     const { products = [], loading, error } = useSelector((state) => state.productState || {});
+    const [selectedCategory, setSelectedCategory] = useState('All');
 
-    // Fetch products when the component mounts
     useEffect(() => {
         dispatch(getProducts());
     }, [dispatch]);
 
-    // Handle product deletion
+    const filteredProducts = selectedCategory === 'All'
+        ? products
+        : products.filter((product) => product.category === selectedCategory);
+
     const handleDeleteProduct = (id) => {
         Alert.alert(
             "Delete Product",
             "Are you sure you want to delete this product?",
             [
-                {
-                    text: "Cancel",
-                    style: "cancel",
-                },
+                { text: "Cancel", style: "cancel" },
                 {
                     text: "Delete",
                     onPress: async () => {
@@ -42,7 +53,34 @@ const AdminProductScreen = ({ navigation }) => {
         );
     };
 
-    // Render each product item
+    const renderCategoryFilter = () => (
+        <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.filterContainer}
+        >
+            {CATEGORIES.map((category) => (
+                <TouchableOpacity
+                    key={category}
+                    style={[
+                        styles.filterChip,
+                        selectedCategory === category && styles.filterChipActive,
+                    ]}
+                    onPress={() => setSelectedCategory(category)}
+                >
+                    <Text
+                        style={[
+                            styles.filterText,
+                            selectedCategory === category && styles.filterTextActive,
+                        ]}
+                    >
+                        {category}
+                    </Text>
+                </TouchableOpacity>
+            ))}
+        </ScrollView>
+    );
+
     const renderProductItem = ({ item }) => (
         <View style={styles.productCard}>
             <View style={styles.imageContainer}>
@@ -57,7 +95,6 @@ const AdminProductScreen = ({ navigation }) => {
                     </View>
                 )}
             </View>
-
             <View style={styles.productInfo}>
                 <Text style={styles.productName}>{item.product_name}</Text>
                 <Text style={styles.productPrice}>₱{item.price.toFixed(2)}</Text>
@@ -67,7 +104,6 @@ const AdminProductScreen = ({ navigation }) => {
                 </View>
                 <Text style={styles.productCategory}>{item.category}</Text>
             </View>
-
             <View style={styles.actionButtons}>
                 <TouchableOpacity
                     style={[styles.iconButton, styles.viewButton]}
@@ -77,12 +113,10 @@ const AdminProductScreen = ({ navigation }) => {
                 </TouchableOpacity>
                 <TouchableOpacity
                     style={[styles.iconButton, styles.editButton]}
-                    onPress={() => navigation.navigate('editProduct', { product: item })} // Pass the whole product object
- // Pass productId
+                    onPress={() => navigation.navigate('editProduct', { product: item })}
                 >
                     <MaterialIcons name="edit" size={24} color="#FFFFFF" />
                 </TouchableOpacity>
-
                 <TouchableOpacity
                     style={[styles.iconButton, styles.deleteButton]}
                     onPress={() => handleDeleteProduct(item._id)}
@@ -93,7 +127,6 @@ const AdminProductScreen = ({ navigation }) => {
         </View>
     );
 
-    // Handle loading state
     if (loading) {
         return (
             <View style={[styles.container, styles.centered]}>
@@ -102,7 +135,6 @@ const AdminProductScreen = ({ navigation }) => {
         );
     }
 
-    // Handle error state
     if (error) {
         return (
             <View style={[styles.container, styles.centered]}>
@@ -111,21 +143,28 @@ const AdminProductScreen = ({ navigation }) => {
         );
     }
 
-    // Render the admin product screen
     return (
         <View style={styles.container}>
-            <View style={styles.header}>
-                <Text style={styles.title}>Admin Products ({products.length})</Text>
-                <TouchableOpacity
-                    style={styles.addButton}
-                    onPress={() => navigation.navigate('addProduct')}
-                >
-                    <MaterialIcons name="add" size={24} color="#FFFFFF" />
-                </TouchableOpacity>
+            <View>
+                <View style={styles.header}>
+                    <TouchableOpacity
+                        style={styles.backButton}
+                        onPress={() => navigation.navigate('dashboard')} // Navigate back to the dashboard
+                    >
+                        <MaterialIcons name="arrow-back" size={24} color="#FFFFFF" />
+                    </TouchableOpacity>
+                    <Text style={styles.title}>Admin Products ({filteredProducts.length})</Text>
+                    <TouchableOpacity
+                        style={styles.addButton}
+                        onPress={() => navigation.navigate('addProduct')}
+                    >
+                        <MaterialIcons name="add" size={24} color="#FFFFFF" />
+                    </TouchableOpacity>
+                </View>
+                {renderCategoryFilter()}
             </View>
-
             <FlatList
-                data={products}
+                data={filteredProducts}
                 renderItem={renderProductItem}
                 keyExtractor={(item) => item._id}
                 contentContainerStyle={styles.productList}

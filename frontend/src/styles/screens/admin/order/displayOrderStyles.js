@@ -6,7 +6,10 @@ const styles = StyleSheet.create({
         backgroundColor: '#121212',
     },
     header: {
+        flexDirection: 'row',
         padding: 15,
+        alignItems: 'center',
+        justifyContent: 'center',
         backgroundColor: '#1A1A1A',
         borderBottomWidth: 1,
         borderBottomColor: '#2A2A2A',
@@ -143,6 +146,11 @@ const styles = StyleSheet.create({
         color: '#FFFFFF',
         fontWeight: 'bold',
     },
+    backButton: {
+        position: 'absolute', // Position the back button to the left
+        left: 15,
+    },
+
 });
 
 export default styles;
