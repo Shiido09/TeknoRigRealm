@@ -13,8 +13,23 @@ import {
   ADMIN_ORDERS_REQUEST,
   ADMIN_ORDERS_SUCCESS,
   ADMIN_ORDERS_FAIL,
+  ORDER_UPDATE_STATUS_REQUEST,
+  ORDER_UPDATE_STATUS_SUCCESS,
+  ORDER_UPDATE_STATUS_FAIL,
 } from '../constants/orderConstants';
 
+export const orderUpdateStatusReducer = (state = {}, action) => {
+  switch (action.type) {
+    case ORDER_UPDATE_STATUS_REQUEST:
+      return { loading: true };
+    case ORDER_UPDATE_STATUS_SUCCESS:
+      return { loading: false, success: true, order: action.payload };
+    case ORDER_UPDATE_STATUS_FAIL:
+      return { loading: false, error: action.payload };
+    default:
+      return state;
+  }
+};
 
 export const adminOrdersReducer = (state = { orders: [] }, action) => {
   switch (action.type) {

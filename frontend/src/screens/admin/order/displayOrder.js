@@ -1,8 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { View, Text, FlatList, TouchableOpacity, Alert, ScrollView, ActivityIndicator } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { getAllOrders } from '../../../redux/actions/orderActions'; // Import the Redux action
+import { useFocusEffect } from '@react-navigation/native'; // Import useFocusEffect
+import { getAllOrders } from '../../../redux/actions/orderActions';
+import { updateOrderStatus as updateOrderStatusAction } from '../../../redux/actions/orderActions';
 import styles from '../../../styles/screens/admin/order/displayOrderStyles';
 
 const ORDER_STATUSES = ['Processing', 'Shipped', 'Delivered', 'Cancelled'];
@@ -12,14 +14,14 @@ const AdminOrderScreen = ({ navigation }) => {
 
     // Access orders and loading/error state from Redux
     const { loading, orders, error } = useSelector(state => state.adminOrders);
-
+    const [refreshTrigger, setRefreshTrigger] = useState(false);
     const [selectedStatus, setSelectedStatus] = useState('All');
 
-    // Fetch orders when the component mounts
-    useEffect(() => {
-        dispatch(getAllOrders());
-    }, [dispatch]);
-
+    useFocusEffect(
+        useCallback(() => {
+            dispatch(getAllOrders());
+        }, [dispatch, refreshTrigger]) // Add refreshTrigger as a dependency
+    );
     const filteredOrders = selectedStatus === 'All'
         ? orders
         : orders.filter(order => order.orderStatus === selectedStatus);
@@ -61,25 +63,28 @@ const AdminOrderScreen = ({ navigation }) => {
         </ScrollView>
     );
 
-    // const updateOrderStatus = (orderId, currentStatus) => {
-    //     Alert.alert(
-    //         "Update Order Status",
-    //         "Select new status:",
-    //         ORDER_STATUSES.map(status => ({
-    //             text: status,
-    //             onPress: () => {
-    //                 if (status !== currentStatus) {
-    //                     Alert.alert(
-    //                         "Success",
-    //                         "Order status updated successfully",
-    //                         [{ text: "OK" }]
-    //                     );
-    //                 }
-    //             }
-    //         })),
-    //         { cancelable: true }
-    //     );
-    // };
+    const updateOrderStatus = (orderId, currentStatus) => {
+        Alert.alert(
+            'Update Order Status',
+            'Select new status:',
+            ORDER_STATUSES.map((status) => ({
+                text: status,
+                onPress: () => {
+                    if (status !== currentStatus) {
+                        dispatch(updateOrderStatusAction(orderId, status)) // Dispatch the Redux action
+                            .then(() => {
+                                Alert.alert('Success', 'Order status updated successfully', [{ text: 'OK' }]);
+                                setRefreshTrigger((prev) => !prev); // Toggle the refreshTrigger to re-fetch orders
+                            })
+                            .catch((error) => {
+                                Alert.alert('Error', error.message, [{ text: 'OK' }]);
+                            });
+                    }
+                },
+            })),
+            { cancelable: true }
+        );
+    };
 
     const getStatusColor = (status) => {
         switch (status) {
@@ -94,10 +99,11 @@ const AdminOrderScreen = ({ navigation }) => {
     const renderOrderItem = ({ item }) => (
         <View style={styles.orderCard}>
             <View style={styles.orderHeader}>
-                <Text style={styles.orderNumber}>Order #{item.id}</Text>
+                {/* Use the last 8 characters of the _id field */}
+                <Text style={styles.orderNumber}>Order #{item._id.slice(-8)}</Text>
                 <TouchableOpacity
                     style={[styles.statusBadge, { backgroundColor: getStatusColor(item.orderStatus) }]}
-                    onPress={() => updateOrderStatus(item.id, item.orderStatus)}
+                    onPress={() => updateOrderStatus(item._id, item.orderStatus)}
                 >
                     <Text style={styles.statusText}>{item.orderStatus}</Text>
                 </TouchableOpacity>
@@ -191,7 +197,7 @@ const AdminOrderScreen = ({ navigation }) => {
             <FlatList
                 data={filteredOrders}
                 renderItem={renderOrderItem}
-                keyExtractor={item => item.id}
+                keyExtractor={(item) => item._id.toString()} // Use MongoDB's _id field
                 contentContainerStyle={styles.orderList}
                 showsVerticalScrollIndicator={false}
             />

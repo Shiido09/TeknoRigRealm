@@ -13,9 +13,39 @@ import {
   ADMIN_ORDERS_REQUEST,
   ADMIN_ORDERS_SUCCESS,
   ADMIN_ORDERS_FAIL,
+  ORDER_UPDATE_STATUS_REQUEST,
+  ORDER_UPDATE_STATUS_SUCCESS,
+  ORDER_UPDATE_STATUS_FAIL,
 } from '../constants/orderConstants';
 import { getItem } from '../../services/authService';
-// Fetch all orders for admin
+
+export const updateOrderStatus = (orderId, status) => async (dispatch) => {
+  try {
+    dispatch({ type: ORDER_UPDATE_STATUS_REQUEST });
+
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    };
+
+    const { data } = await axios.put(`${API_URL}/orders/${orderId}/status`, { status }, config);
+
+    dispatch({
+      type: ORDER_UPDATE_STATUS_SUCCESS,
+      payload: data,
+    });
+  } catch (error) {
+    dispatch({
+      type: ORDER_UPDATE_STATUS_FAIL,
+      payload:
+        error.response && error.response.data.message
+          ? error.response.data.message
+          : error.message,
+    });
+  }
+};
+
 export const getAllOrders = () => async (dispatch) => {
   try {
     dispatch({ type: ADMIN_ORDERS_REQUEST });

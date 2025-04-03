@@ -3,7 +3,8 @@ import {
   createOrder, 
   getMyOrders, 
   getOrderById,
-  getAllOrders
+  getAllOrders,
+  updateOrderStatus
 } from '../controllers/orderController.js';
 import { protect } from '../middleware/authMiddleware.js';
 
@@ -12,6 +13,7 @@ const router = express.Router();
 // Create a new order
 router.post('/', createOrder);
 router.get('/getAllOrders', getAllOrders);
+router.put('/:id/status',updateOrderStatus)
 // Get all orders for the logged-in user
 router.get('/myorders', protect, getMyOrders);
 
