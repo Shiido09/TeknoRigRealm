@@ -162,3 +162,30 @@ export const removeCartItem = async (itemId) => {
     return false;
   }
 };
+
+// Remove multiple items from cart after placing an order
+export const removeCartItems = async (itemIds) => {
+  try {
+    if (!db) {
+      await initCartDB();
+    }
+    
+    if (!itemIds || itemIds.length === 0) {
+      return true; // Nothing to delete
+    }
+    
+    // Create placeholders for SQL query
+    const placeholders = itemIds.map(() => '?').join(',');
+    
+    // Delete all items by IDs
+    await db.runAsync(
+      `DELETE FROM cart_items WHERE id IN (${placeholders})`,
+      ...itemIds
+    );
+    
+    return true;
+  } catch (error) {
+    console.error('Error removing multiple cart items:', error);
+    return false;
+  }
+};

@@ -14,9 +14,10 @@ import {
 import { useDispatch, useSelector } from 'react-redux';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getItem, getUserById } from '../services/authService';
-import { getCartItemsByIds } from '../utils/cartDatabase';
+import { getCartItemsByIds, removeCartItems } from '../utils/cartDatabase';
 import { createOrder } from '../redux/actions/orderActions';
 import styles from '../styles/screens/CheckoutDetailsScreenStyles';
+import { ORDER_CREATE_RESET } from '../redux/constants/orderConstants';
 
 const CheckoutDetailsScreen = ({ route, navigation }) => {
   const { selectedItemIds, subtotal, shipping, total } = route.params;
@@ -47,6 +48,16 @@ const CheckoutDetailsScreen = ({ route, navigation }) => {
     { id: 'standard', name: 'Standard Delivery', price: 150.00, eta: '3-5 days', icon: '🚚' },
     { id: 'express', name: 'Express Delivery', price: 200.00, eta: '1-2 days', icon: '🚀' }
   ];
+
+  useEffect(() => {
+    // Reset order state when component mounts
+    dispatch({ type: ORDER_CREATE_RESET });
+
+    // Return cleanup function to reset order state when unmounting
+    return () => {
+      dispatch({ type: ORDER_CREATE_RESET });
+    };
+  }, [dispatch]);
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -98,6 +109,13 @@ const CheckoutDetailsScreen = ({ route, navigation }) => {
 
   useEffect(() => {
     if (orderSuccess) {
+      // Clean up cart items after successful order
+      removeCartItems(selectedItemIds).then(() => {
+        console.log('Cart items removed after successful order');
+      }).catch(error => {
+        console.error('Error removing cart items after order:', error);
+      });
+      
       Alert.alert(
         "Order Placed",
         "Your order has been placed successfully!",
@@ -114,7 +132,7 @@ const CheckoutDetailsScreen = ({ route, navigation }) => {
         [{ text: "OK" }]
       );
     }
-  }, [orderSuccess, orderError, navigation]);
+  }, [orderSuccess, orderError, navigation, selectedItemIds]);
 
   const getSelectedCourierPrice = () => {
     const courier = courierOptions.find(c => c.id === selectedCourier);
