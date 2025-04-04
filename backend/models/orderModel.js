@@ -34,7 +34,7 @@ const orderSchema = new mongoose.Schema({
     required: true,
     default: 'Cash on Delivery'
   },
-  Courier:[
+  Courier:
     {
       CourierName: {
         type: String,
@@ -45,7 +45,7 @@ const orderSchema = new mongoose.Schema({
         required: true
       },
     }
-  ],
+  ,
   totalPrice: {
     type: Number,
     required: true,

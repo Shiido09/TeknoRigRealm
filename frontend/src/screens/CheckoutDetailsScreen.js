@@ -164,11 +164,11 @@ const CheckoutDetailsScreen = ({ route, navigation }) => {
         // Payment method from selection
         PaymentMethod: selectedPaymentMethod === 'cod' ? 'Cash on Delivery' : 
                       selectedPaymentMethod === 'card' ? 'Credit/Debit Card' : 'GCash',
-        // Courier information
-        Courier: [{
+        // Courier information - updated to be an object instead of an array
+        Courier: {
           CourierName: courier.name,
           shippingfee: courier.price
-        }],
+        },
         // Total price (sum of product prices plus shipping)
         totalPrice: calculatedTotalPrice,
         // Add user to the order data (changed from userId to user to match schema)
