@@ -164,18 +164,21 @@ const CheckoutDetailsScreen = ({ route, navigation }) => {
         // Payment method from selection
         PaymentMethod: selectedPaymentMethod === 'cod' ? 'Cash on Delivery' : 
                       selectedPaymentMethod === 'card' ? 'Credit/Debit Card' : 'GCash',
-        // Courier information - updated to be an object instead of an array
+        // Courier information as a single object (not an array)
         Courier: {
           CourierName: courier.name,
           shippingfee: courier.price
         },
         // Total price (sum of product prices plus shipping)
         totalPrice: calculatedTotalPrice,
-        // Add user to the order data (changed from userId to user to match schema)
+        // Add user to the order data
         user: userId
       };
 
-      console.log('Sending order data:', JSON.stringify(orderData));
+      // Add additional debugging logs to check data structure
+      console.log('Selected courier details:', courier);
+      console.log('Courier data being sent:', orderData.Courier);
+      console.log('Full order data:', JSON.stringify(orderData, null, 2));
       
       // Dispatch order creation action
       dispatch(createOrder(orderData));

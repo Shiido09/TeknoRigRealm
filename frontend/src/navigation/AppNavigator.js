@@ -31,18 +31,18 @@ const AppNavigator = () => {
         navigationRef.current?.setParams({ key });
       }
     }}>
-      {/* <Stack.Navigator 
+      <Stack.Navigator 
         initialRouteName="Main"
         screenOptions={{
           headerShown: false,
         }}
-      > */}
-      <Stack.Navigator 
+      >
+      {/* <Stack.Navigator 
         initialRouteName="Admin" // uncomment mo na lang sa taas
         screenOptions={{
           headerShown: false,
         }}
-      >
+      > */}
         {/* hanggang dito pare */}
         <Stack.Screen name="Admin" component={AdminNavigator} />
 
