@@ -8,20 +8,26 @@ export const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 15,
+    padding: 18,
     backgroundColor: '#1A1A1A',
+    borderBottomWidth: 1,
+    borderBottomColor: '#2A2A2A',
+    elevation: 3,
   },
   backButton: {
-    marginRight: 10,
+    marginRight: 15,
+    padding: 5,
   },
   backButtonText: {
     color: '#4CAF50',
     fontSize: 16,
+    fontWeight: '600',
   },
   headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#FFFFFF',
+    letterSpacing: 0.5,
   },
   loadingContainer: {
     flex: 1,
@@ -42,9 +48,10 @@ export const styles = StyleSheet.create({
   },
   retryButton: {
     backgroundColor: '#4CAF50',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
     borderRadius: 8,
+    elevation: 2,
   },
   retryButtonText: {
     color: '#FFFFFF',
@@ -61,13 +68,15 @@ export const styles = StyleSheet.create({
     color: '#AAAAAA',
     fontSize: 16,
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: 25,
+    lineHeight: 22,
   },
   shopButton: {
     backgroundColor: '#4CAF50',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
     borderRadius: 8,
+    elevation: 2,
   },
   shopButtonText: {
     color: '#FFFFFF',
@@ -79,53 +88,81 @@ export const styles = StyleSheet.create({
   },
   tabsContainer: {
     backgroundColor: '#1A1A1A',
+    borderBottomWidth: 1,
+    borderBottomColor: '#2A2A2A',
+    elevation: 2,
+    height: 48, // Fixed height for container
   },
   tabsContentContainer: {
     paddingHorizontal: 10,
+    alignItems: 'center',
+    height: 48, // Match container height
   },
   tabButton: {
-    paddingVertical: 12,
     paddingHorizontal: 16,
-    marginHorizontal: 4,
+    marginHorizontal: 6,
+    height: 45, // Fixed height
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+    minWidth: 80, // Add a minimum width to ensure consistent tab sizing
   },
   activeTabButton: {
-    borderBottomWidth: 2,
-    borderBottomColor: '#4CAF50',
+    // We don't need additional styles that might affect layout
+    borderBottomWidth: 0,
+  },
+  // New style for active indicator that doesn't affect layout
+  activeIndicator: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 3,
+    backgroundColor: '#4CAF50',
+    borderTopLeftRadius: 3,
+    borderTopRightRadius: 3,
   },
   tabButtonText: {
     color: '#AAAAAA',
-    fontSize: 16,
+    fontSize: 15,
+    fontWeight: '500',
+    textAlign: 'center', // Ensure text is centered
   },
   activeTabButtonText: {
     color: '#4CAF50',
-    fontWeight: 'bold',
+    fontWeight: '500', // Keep the same font weight as inactive tabs
+    // Apply a different style that doesn't change text dimensions
   },
   ordersList: {
     padding: 15,
   },
   orderCard: {
     backgroundColor: '#2A2A2A',
-    borderRadius: 10,
-    padding: 15,
-    marginBottom: 15,
+    borderRadius: 12,
+    padding: 18,
+    marginBottom: 16,
+    elevation: 3,
+    borderLeftWidth: 4,
+    borderLeftColor: '#4CAF50',
   },
   orderHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 12,
   },
   orderId: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: 'bold',
+    letterSpacing: 0.5,
   },
   orderStatus: {
     fontSize: 14,
     fontWeight: 'bold',
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderRadius: 4,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 6,
     overflow: 'hidden',
   },
   statusDelivered: {
@@ -151,20 +188,24 @@ export const styles = StyleSheet.create({
   orderInfo: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 10,
+    marginBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#3A3A3A',
+    paddingBottom: 12,
   },
   orderDate: {
-    color: '#AAAAAA',
+    color: '#BBBBBB',
     fontSize: 14,
   },
   orderTotal: {
     color: '#4CAF50',
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: 'bold',
   },
   orderItemsCount: {
     color: '#CCCCCC',
     fontSize: 14,
+    marginTop: 4,
   },
   emptyTabContainer: {
     padding: 40,
@@ -174,6 +215,7 @@ export const styles = StyleSheet.create({
     color: '#AAAAAA',
     fontSize: 16,
     textAlign: 'center',
+    lineHeight: 22,
   },
 });
 

@@ -185,12 +185,16 @@ export const listMyOrders = () => async (dispatch) => {
     };
 
     const { data } = await axios.get(`${API_URL}/orders/myorders`, config);
+    
+    // Log the response to help with debugging
+    console.log('My Orders API response:', data);
 
     dispatch({
       type: ORDER_LIST_MY_SUCCESS,
-      payload: data
+      payload: data.orders || [] // Ensure we extract the orders array correctly
     });
   } catch (error) {
+    console.error('Error fetching my orders:', error.response?.data || error.message);
     dispatch({
       type: ORDER_LIST_MY_FAIL,
       payload: error.response && error.response.data.message 
