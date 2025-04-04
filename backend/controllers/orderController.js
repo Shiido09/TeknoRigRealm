@@ -75,7 +75,8 @@ import { User } from "../models/userModel.js";
 //   }
 // };
 
-export const createOrder = async (req, res) => {n 
+export const createOrder = async (req, res) => {
+
   try {
     const {
       user, // This is the user ID from the request body
