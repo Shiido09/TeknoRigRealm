@@ -7,7 +7,7 @@ import { getAllOrders } from '../../../redux/actions/orderActions';
 import { updateOrderStatus as updateOrderStatusAction } from '../../../redux/actions/orderActions';
 import styles from '../../../styles/screens/admin/order/displayOrderStyles';
 
-const ORDER_STATUSES = ['Processing', 'Shipped', 'Delivered', 'Cancelled'];
+const ORDER_STATUSES = ['Processing', 'To Ship', 'To Deliver', 'Completed', 'Cancelled'];
 
 const AdminOrderScreen = ({ navigation }) => {
     const dispatch = useDispatch();
@@ -25,6 +25,7 @@ const AdminOrderScreen = ({ navigation }) => {
     const filteredOrders = selectedStatus === 'All'
         ? orders
         : orders.filter(order => order.orderStatus === selectedStatus);
+
 
     const renderStatusFilter = () => (
         <ScrollView
@@ -85,21 +86,22 @@ const AdminOrderScreen = ({ navigation }) => {
             { cancelable: true }
         );
     };
-
     const getStatusColor = (status) => {
         switch (status) {
-            case 'Processing': return '#FFA000';
-            case 'Shipped': return '#2196F3';
-            case 'Delivered': return '#4CAF50';
-            case 'Cancelled': return '#FF5252';
-            default: return '#AAAAAA';
+            case 'Processing': return '#FFA000'; // Amber
+            case 'To Ship': return '#2196F3'; // Blue
+            case 'To Deliver': return '#FF9800'; // Orange
+            case 'Completed': return '#4CAF50'; // Green
+            case 'Cancelled': return '#FF5252'; // Red
+            default: return '#AAAAAA'; // Gray for unknown statuses
         }
     };
+
+
 
     const renderOrderItem = ({ item }) => (
         <View style={styles.orderCard}>
             <View style={styles.orderHeader}>
-                {/* Use the last 8 characters of the _id field */}
                 <Text style={styles.orderNumber}>Order #{item._id.slice(-8)}</Text>
                 <TouchableOpacity
                     style={[styles.statusBadge, { backgroundColor: getStatusColor(item.orderStatus) }]}
@@ -137,7 +139,9 @@ const AdminOrderScreen = ({ navigation }) => {
                     <MaterialIcons name="local-shipping" size={20} color="#AAAAAA" />
                     <Text style={styles.infoLabel}>Courier:</Text>
                     <Text style={styles.infoValue}>
-                        {(item.Courier || []).map(c => `${c.CourierName} (₱${c.shippingfee})`).join(', ')}
+                        {item.Courier
+                            ? `${item.Courier.CourierName} (₱${item.Courier.shippingfee.toFixed(2)})`
+                            : 'No courier assigned'}
                     </Text>
                 </View>
 

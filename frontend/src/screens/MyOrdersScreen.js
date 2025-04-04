@@ -147,7 +147,7 @@ const MyOrdersScreen = ({ navigation }) => {
         </TouchableOpacity>
         <Text style={styles.headerTitle}>My Orders</Text>
       </View>
-
+  
       {loading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#4CAF50" />
@@ -171,7 +171,10 @@ const MyOrdersScreen = ({ navigation }) => {
         </View>
       ) : (
         <View style={styles.contentContainer}>
-          {renderTabs()}
+          {/* Wrap renderTabs in a View */}
+          <View style={styles.tabsWrapper}>
+            {renderTabs()}
+          </View>
           <FlatList
             data={getFilteredOrders()}
             renderItem={renderOrderItem}

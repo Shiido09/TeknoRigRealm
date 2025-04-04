@@ -217,6 +217,10 @@ export const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 22,
   },
+  tabsWrapper: {
+    marginBottom: 10, // Add spacing below the tabs
+    paddingHorizontal: 10, // Add padding around the tabs
+  },
 });
 
 export default styles;

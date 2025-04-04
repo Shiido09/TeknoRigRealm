@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { 
-  View, 
-  Text, 
-  TextInput, 
-  TouchableOpacity, 
-  KeyboardAvoidingView, 
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  KeyboardAvoidingView,
   Platform,
   ScrollView,
   Alert,
@@ -22,11 +22,20 @@ const LoginScreen = ({ navigation }) => {
   const handleLogin = async () => {
     try {
       setIsLoading(true);
-      const data = await login({ email, password });
-      await setItem('token', data.token); // Store token using SQLite
-      await setItem('userId', data._id); // Store user ID using SQLite
+      const data = await login({ email, password }); // Call the login function
+
+      // Store token and user ID using SQLite
+      await setItem('token', data.token);
+      await setItem('userId', data._id);
+
       Alert.alert('Login Successful', 'Welcome back!');
-      navigation.navigate('Main'); 
+
+      // Navigate based on user role
+      if (data.isAdmin) {
+        navigation.navigate('Admin'); // Navigate to admin dashboard
+      } else {
+        navigation.navigate('Main'); // Navigate to user main screen
+      }
     } catch (error) {
       Alert.alert('Login Failed', error.message || 'Invalid credentials');
     } finally {
@@ -47,7 +56,7 @@ const LoginScreen = ({ navigation }) => {
             </TouchableOpacity>
             <Text style={styles.headerTitle}>Login</Text>
           </View>
-          
+
           <View style={styles.formContainer}>
             <Text style={styles.formLabel}>Email</Text>
             <TextInput
@@ -59,7 +68,7 @@ const LoginScreen = ({ navigation }) => {
               keyboardType="email-address"
               autoCapitalize="none"
             />
-            
+
             <Text style={styles.formLabel}>Password</Text>
             <TextInput
               style={styles.input}
@@ -69,12 +78,12 @@ const LoginScreen = ({ navigation }) => {
               onChangeText={setPassword}
               secureTextEntry
             />
-            
+
             <TouchableOpacity style={styles.forgotPassword}>
               <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
             </TouchableOpacity>
-            
-            <TouchableOpacity 
+
+            <TouchableOpacity
               style={[styles.loginButton, isLoading && { opacity: 0.7 }]}
               onPress={handleLogin}
               disabled={isLoading}
@@ -85,7 +94,7 @@ const LoginScreen = ({ navigation }) => {
                 <Text style={styles.loginButtonText}>Login</Text>
               )}
             </TouchableOpacity>
-            
+
             <View style={styles.registerContainer}>
               <Text style={styles.registerText}>Don't have an account? </Text>
               <TouchableOpacity onPress={() => navigation.navigate('Register')}>
