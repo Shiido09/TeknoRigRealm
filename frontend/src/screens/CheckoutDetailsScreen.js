@@ -111,7 +111,6 @@ const CheckoutDetailsScreen = ({ route, navigation }) => {
     if (orderSuccess) {
       // Clean up cart items after successful order
       removeCartItems(selectedItemIds).then(() => {
-        console.log('Cart items removed after successful order');
       }).catch(error => {
         console.error('Error removing cart items after order:', error);
       });
@@ -193,10 +192,8 @@ const CheckoutDetailsScreen = ({ route, navigation }) => {
         user: userId
       };
 
-      // Add additional debugging logs to check data structure
-      console.log('Selected courier details:', courier);
-      console.log('Courier data being sent:', orderData.Courier);
-      console.log('Full order data:', JSON.stringify(orderData, null, 2));
+
+
       
       // Dispatch order creation action
       dispatch(createOrder(orderData));
